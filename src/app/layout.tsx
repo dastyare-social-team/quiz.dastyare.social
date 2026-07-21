@@ -1,21 +1,11 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "@/styles/globals.css";
 import { cn } from "@/lib/utils";
-
-const pally = localFont({
-  src: [
-    {
-      path: "../assets/fonts/Pally-Regular.ttf",
-      weight: "400",
-    }
-  ],
-  variable: "--font-pally",
-});
+import { pally } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: {
-    default: "Dastyare Social — See How Much Far You Can Go",
+    default: "Scorecard — Dastyare Social",
     template: "%s — Dastyare Social",
   },
   description: "quiz.dastyare.social",

@@ -1,0 +1,10 @@
+{
+  "general": {
+    "app_name": "Scorecard — Dastyare Social"
+  },
+  "not_found": {
+    "meta_title": "Not Found",
+    "description": "Are You Lost — Seems There's Not What You're Looking For",
+    "back_to_home": "Get Back To Home Page"
+  }
+}

@@ -6,7 +6,7 @@ import Link from "next/link";
 
 const Header = () => {
   return (
-    <div className="sticky top-0 backdrop-blur-xl flex gap-x-2.5 bg-primary/[1%] border-b border-primary/10 px-5 pt-5">
+    <div className="sticky top-0 backdrop-blur-xl flex gap-x-2.5 bg-primary/[1%] border-b border-primary/10 px-5 pt-5 select-none">
       <Link
         href={routes.default}
         className="flex items-center gap-x-2.5 pb-2.5 cursor-pointer"
@@ -22,7 +22,7 @@ const Header = () => {
           />
         </div>
 
-        <div className="text-xl select-none leading-2">
+        <div className="text-xl leading-2">
           Dastyare Social
           <span className="text-sm">
             —/ Raise Visibility, Build Brand, Grow SALES

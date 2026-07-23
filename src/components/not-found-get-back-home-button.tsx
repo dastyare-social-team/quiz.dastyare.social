@@ -18,7 +18,7 @@ const NotFoundGetBackHomeButton = () => {
   return (
     <Button
       disabled={is_clicked}
-      className="text-sm md:text-sm mb-2"
+      className="mb-2"
       onClick={() => {
         set_is_clicked(true);
         router.push("/");

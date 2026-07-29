@@ -3,7 +3,11 @@
 import WindowLayout from "@/components/window-layout";
 
 const Page = () => {
-  return <WindowLayout doc_path="landing-page/v2.mdx" />;
+  return (
+    <WindowLayout>
+      <></>
+    </WindowLayout>
+  );
 };
 
 export default Page;

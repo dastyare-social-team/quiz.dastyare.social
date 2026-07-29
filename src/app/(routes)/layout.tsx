@@ -30,7 +30,7 @@ export default function layout({ children }: { children: React.ReactNode }) {
         <Header />
 
         <div className="pt-15 px-6.25 sm:pt-20 sm:px-12.5 flex flex-col items-center flex-1 w-full h-full">
-          <div className="lg:w-3xl w-full h-full pb-6.25 sm:pb-12.5">
+          <div className="lg:w-3xl w-full h-full">
             {children}
 
             <Footer />

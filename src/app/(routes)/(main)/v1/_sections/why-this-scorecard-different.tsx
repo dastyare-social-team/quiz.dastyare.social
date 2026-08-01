@@ -99,21 +99,21 @@ const tableData = [
   },
 ];
 
-const LandingWhyThisWorkshopIsDifferentSectionV1 = async () => {
-  const t = await getTranslations("why_this_workshop_different");
+const LandingWhyThisScorecardIsDifferentSectionV1 = async () => {
+  const t = await getTranslations("why_this_scorecard_different");
 
   return (
     <SectionWrapper className="hidden lg:flex flex-1 justify-center items-center">
       <div className="flex flex-col gap-y-8 items-center">
         <div className="flex flex-col max-w-xl gap-y-2.5 items-center">
           <h2 className="text-center">
-            Why This Workshop{" "}
+            Why This Scorecard{" "}
             <span className="text-primary bg-primary/5">is different</span>
           </h2>
-          <p>Not Another "Personal Branding" Webinar</p>
+          <p>Not Another Vanity "Brand Audit"</p>
         </div>
 
-        <RegistrationForm primary_cta="Save My Seat — Now" />
+        <RegistrationForm primary_cta="Get Your Score — Now" />
 
         {/* —— Comparison Table —— */}
         <Table className="w-full max-w-5xl overflow-x-scroll select-none">
@@ -169,4 +169,4 @@ const LandingWhyThisWorkshopIsDifferentSectionV1 = async () => {
   );
 };
 
-export default LandingWhyThisWorkshopIsDifferentSectionV1;
+export default LandingWhyThisScorecardIsDifferentSectionV1;

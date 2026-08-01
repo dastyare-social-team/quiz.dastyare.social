@@ -6,7 +6,6 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { LangDir, LangFont } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import NotFoundGetBackHomeButton from "@/components/not-found-get-back-home-button";
-import NextTopLoader from "nextjs-toploader";
 
 export async function generateMetadata(): Promise<Metadata> {
   const tGeneral = await getTranslations("general");
@@ -36,11 +35,6 @@ export default async function GlobalNotFound() {
         )}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <NextTopLoader
-            color="var(--color-primary)"
-            showSpinner={false}
-            shadow="none"
-          />
           <div className="w-full md:max-w-xs flex flex-col justify-center items-center gap-y-5 px-5 py-5 rounded-3xl border-2 border-dashed border-primary/5 bg-primary/3">
             <div className="text-center">{tNotFound("description")}</div>
 

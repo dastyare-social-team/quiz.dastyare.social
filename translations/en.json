@@ -48,19 +48,19 @@
       "button": "Contact Us — Now"
     }
   },
-  "why_this_workshop_different": {
+  "why_this_scorecard_different": {
     "table": {
       "headers": {
-        "col_one": "this Personal Branding Workshop",
-        "col_two": "Generic Marketing Courses",
-        "col_three": "\"Just Post More\" Advice"
+        "col_one": "this Scorecard",
+        "col_two": "generic \"brand audit\" tools",
+        "col_three": "guessing"
       },
       "rows": {
-        "row_one": "built for technical founders, not marketers",
-        "row_two": "teaches a campaign structure, not just content ideas",
-        "row_three": "taught by someone who's shipped the product side too",
-        "row_four": "runnable without a team or budget",
-        "row_five": "Live Q&A on your specific brand"
+        "row_one": "measures demand-readiness, not just follower count",
+        "row_two": "quick start, then no per-question gates",
+        "row_three": "built for founders, not influencers",
+        "row_four": "gives a ranked fix-list, not just a grade",
+        "row_five": "takes under 5 minutes"
       },
       "values": {
         "sometimes": "sometimes",

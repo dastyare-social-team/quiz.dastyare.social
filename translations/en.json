@@ -12,31 +12,31 @@
       "prefix": "One of These Is",
       "highlight": "Probably Your Question"
     },
-    "description": "Answered honestly — because the only thing between you and registering is usually one unanswered question",
+    "description": "Answered honestly — because the only thing between you and getting the score is usually one unanswered question",
     "items": {
       "q1": {
-        "question": "is there a cost to attend?",
-        "answer": "No cost to attend — just register, no credit card required"
+        "question": "do I need to give my email?",
+        "answer": "Yes — a quick name and email to get started (no long form, just those two). Once you're in, the questions themselves have no additional gates"
       },
       "q2": {
-        "question": "is this going to be a sales pitch the whole time?",
-        "answer": "The workshop teaches the content and campaign system in full"
+        "question": "what happens after I get my score?",
+        "answer": "[ADD: honest answer — is the full breakdown gated behind email? Say so plainly here if it is.]"
       },
       "q3": {
-        "question": "do I need an existing audience to benefit from this?",
-        "answer": "No. This is built for founders starting from zero or near-zero visibility"
+        "question": "is this trying to sell me something?",
+        "answer": "The scorecard itself is a standalone, honest assessment. [ADD: what, if anything, is offered afterward — don't overpromise \"no pitch\" if there's a next step being pointed to.]"
       },
       "q4": {
-        "question": "what if I can't attend live?",
-        "answer": "No. This is built for founders starting from zero or near-zero visibility"
+        "question": "how is \"health\" actually measured?",
+        "answer": "[ADD: real scoring criteria — positioning clarity, consistency, conversion path, platform reliance, etc. — once finalized]"
       },
       "q5": {
-        "question": "how long is the workshop?",
-        "answer": "No. This is built for founders starting from zero or near-zero visibility"
+        "question": "what if my score is bad?",
+        "answer": "That's the point of taking it — you can't fix what you haven't measured. The report tells you exactly what to prioritize"
       },
       "q6": {
-        "question": "how long is the workshop?",
-        "answer": "No. This is built for founders starting from zero or near-zero visibility"
+        "question": "how long does it take?",
+        "answer": "about 5 minutes"
       }
     },
     "contact": {
@@ -65,7 +65,8 @@
       "values": {
         "sometimes": "sometimes",
         "rarely": "rarely",
-        "dash": "—"
+        "dash": "—",
+        "instant": "instant, but wrong"
       }
     }
   }

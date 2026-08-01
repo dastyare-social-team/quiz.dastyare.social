@@ -4,7 +4,7 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 import { FootprintsIcon } from "lucide-react";
 
-const LandingHowItWorksSectionV1 = () => {
+const LandingHowItWorksSectionV2 = () => {
   return (
     <SectionWrapper className="justify-center items-center">
       <div className="flex flex-col gap-y-8 items-center">
@@ -60,4 +60,4 @@ const LandingHowItWorksSectionV1 = () => {
   );
 };
 
-export default LandingHowItWorksSectionV1;
+export default LandingHowItWorksSectionV2;

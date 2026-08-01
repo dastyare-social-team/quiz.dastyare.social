@@ -4,15 +4,15 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 
 const value_props = [
-  "under 5 minutes, quick signup to start",
-  "a real diagnosis, not a vague feeling",
-  "a ranked list of what to fix first",
+  "no cost to attend, no card required",
+  "a campaign system, not just content tips",
+  "Live Q&A on your actual brand",
 ];
 
-const LandingFinalCTASectionV1 = () => {
+const LandingFinalCTASectionV2 = () => {
   return (
-    <SectionWrapper className="justify-center items-center">
-      <div className="max-w-xl text-center pt-5 flex flex-col gap-y-2.5 items-center">
+    <SectionWrapper>
+      <div className="max-w-xl pt-5 flex flex-col gap-y-2.5">
         <h3>
           You can't fix a Personal Brand{" "}
           <span className="text-primary">You haven't diagnosed</span>
@@ -32,8 +32,10 @@ const LandingFinalCTASectionV1 = () => {
           <RegistrationForm primary_cta="Get Your Score — Now" />
         </div>
       </div>
+
+      <div className="aspect-square flex-1 bg-primary/[1%] border-2 border-primary/5"></div>
     </SectionWrapper>
   );
 };
 
-export default LandingFinalCTASectionV1;
+export default LandingFinalCTASectionV2;

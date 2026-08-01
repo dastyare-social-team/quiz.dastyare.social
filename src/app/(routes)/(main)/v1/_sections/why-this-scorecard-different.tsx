@@ -52,19 +52,6 @@ const tableData = [
       { kind: "icon" as const, Icon: CheckIcon, className: "text-primary" },
       {
         kind: "text" as const,
-        key: "table.values.sometimes",
-        className: "text-[20px]",
-      },
-      { kind: "icon" as const, Icon: XIcon },
-    ],
-  },
-  {
-    type: "row" as const,
-    labelKey: "table.rows.row_three",
-    cells: [
-      { kind: "icon" as const, Icon: CheckIcon, className: "text-primary" },
-      {
-        kind: "text" as const,
         key: "table.values.rarely",
         className: "text-[20px]",
       },
@@ -77,11 +64,24 @@ const tableData = [
   },
   {
     type: "row" as const,
-    labelKey: "table.rows.row_four",
+    labelKey: "table.rows.row_three",
     cells: [
       { kind: "icon" as const, Icon: CheckIcon, className: "text-primary" },
       { kind: "icon" as const, Icon: XIcon },
-      { kind: "icon" as const, Icon: CheckIcon },
+      { kind: "icon" as const, Icon: XIcon },
+    ],
+  },
+  {
+    type: "row" as const,
+    labelKey: "table.rows.row_four",
+    cells: [
+      { kind: "icon" as const, Icon: CheckIcon, className: "text-primary" },
+      {
+        kind: "text" as const,
+        key: "table.values.rarely",
+        className: "text-[20px]",
+      },
+      { kind: "icon" as const, Icon: XIcon },
     ],
   },
   {
@@ -94,7 +94,11 @@ const tableData = [
         key: "table.values.rarely",
         className: "text-[20px]",
       },
-      { kind: "icon" as const, Icon: XIcon },
+      {
+        kind: "text" as const,
+        key: "table.values.instant",
+        className: "text-[20px]",
+      },
     ],
   },
 ];

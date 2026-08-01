@@ -1,3 +1,5 @@
+"use client";
+
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
@@ -5,7 +7,7 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-full transition-all disabled:pointer-events-none disabled:opacity-60 outline-none cursor-pointer select-none text-[24px] px-6 py-0.5 tracking-[-1px] line-clamp-1",
+  "inline-flex items-center justify-center rounded-full transition-all disabled:pointer-events-none disabled:opacity-60 outline-none cursor-pointer select-none text-[24px] px-6 py-1 tracking-[-1px] line-clamp-1",
   {
     variants: {
       variant: {

@@ -4,9 +4,9 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 
 const value_props = [
-  "no cost to attend, no card required",
-  "a campaign system, not just content tips",
-  "Live Q&A on your actual brand",
+  "under 5 minutes, quick signup to start",
+  "a real diagnosis, not a vague feeling",
+  "a ranked list of what to fix first",
 ];
 
 const LandingFinalCTASectionV2 = () => {

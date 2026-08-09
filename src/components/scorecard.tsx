@@ -3,17 +3,20 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/button";
 import QuestionOption from "@/components/question-option";
-import { HIGHLIGHT_WORDS, scorecard, ScoreOption, ScoreQuestion } from "@/config/scorecard";
+import {
+  getHighlightWords,
+  Scorecard as scorecard_model,
+  ScoreOption,
+  ScoreQuestion,
+} from "@/config/scorecard";
 import { useRouter } from "next/navigation";
 
-const PRIMARY_COLOR = "bg-primary";
-const PRIMARY_COLOR_TEXT = "text-primary";
+/* —— Helper that now accepts highlight words as parameter —— */
+function highlightQuestionText(text: string, highlightWords: string[]) {
+  if (!highlightWords.length) return text;
 
-function highlightQuestionText(text: string) {
-  if (!HIGHLIGHT_WORDS.length) return text;
-
-  const escapedWords = HIGHLIGHT_WORDS.map((w) =>
-    w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  const escapedWords = highlightWords.map((w) =>
+    w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
   );
   const regex = new RegExp(`(${escapedWords.join("|")})`, "gi");
 
@@ -25,7 +28,7 @@ function highlightQuestionText(text: string) {
         <span
           key={index}
           className={
-            PRIMARY_COLOR_TEXT +
+            "text-primary" +
             " bg-primary/8 px-1.5 leading-3 border border-primary/10 rounded-full inline-flex"
           }
         >
@@ -37,15 +40,21 @@ function highlightQuestionText(text: string) {
   });
 }
 
-const Page = () => {
+const Scorecard = ({ scorecard }: { scorecard: scorecard_model }) => {
   const router = useRouter();
-  
+
   const questions = scorecard.questions as ScoreQuestion[];
   const total_questions = questions.length;
 
   const [current_index, set_current_index] = useState(0);
   const [answers, setAnswers] = useState<(ScoreOption | null)[]>(
-    Array(total_questions).fill(null)
+    Array(total_questions).fill(null),
+  );
+
+  /* —— Compute highlight words for this scorecard —— */
+  const highlightWords = useMemo(
+    () => getHighlightWords(scorecard),
+    [scorecard],
   );
 
   const currentQuestion = questions[current_index];
@@ -75,45 +84,45 @@ const Page = () => {
   };
 
   const handle_finish = () => {
-  const totalScore = answers.reduce((sum, ans) => sum + (ans?.score ?? 0), 0);
+    const totalScore = answers.reduce((sum, ans) => sum + (ans?.score ?? 0), 0);
 
-  const band = scorecard.interpretationBands.find(
-    (b) => totalScore >= b.range[0] && totalScore <= b.range[1]
-  );
+    const band = scorecard.interpretationBands.find(
+      (b) => totalScore >= b.range[0] && totalScore <= b.range[1],
+    );
 
-  if (!band) {
-    console.error("Score band not found");
-    return;
-  }
+    if (!band) {
+      console.error("Score band not found");
+      return;
+    }
 
-  const params = new URLSearchParams({
-    score: totalScore.toString(),
-    result: band.slug,
-  });
+    const params = new URLSearchParams({
+      score: totalScore.toString(),
+      result: band.slug,
+    });
 
-  router.push(`${band.redirectUrl}?${params.toString()}`);
-};
+    router.push(`${band.redirectUrl}?${params.toString()}`);
+  };
 
   const isFirst = current_index === 0;
   const isLast = current_index === total_questions - 1;
   const isCurrentAnswered = answers[current_index] !== null;
 
   return (
-    <div className="w-full flex justify-center items-center h-screen px-5 py-5">
+    <div className="w-full flex justify-center items-center h-full px-5 py-5">
       <div className="flex flex-col gap-y-8 max-w-xl w-full">
         {/* —— PROGRESS BAR —— */}
         <div className="w-full">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm">
+            <span className="text-[20px]">
               Question — {current_index + 1} / {total_questions}
             </span>
-            <span className="text-xs text-neutral-500">
+            <span className="text-[18px] text-neutral-500">
               {Math.round(progress)}%
             </span>
           </div>
           <div className="w-full h-0.5 rounded-full bg-secondary/10 overflow-hidden">
             <div
-              className={`h-full ${PRIMARY_COLOR} transition-all duration-300`}
+              className={`h-full bg-primary transition-all duration-300`}
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -121,9 +130,9 @@ const Page = () => {
 
         {/* —— QUESTION —— */}
         <div className="flex flex-col gap-y-5">
-          <div className="text-lg leading-relaxed">
+          <div className="leading-relaxed">
             <span className="mr-1">{current_index + 1} —</span>
-            {highlightQuestionText(currentQuestion.question)}
+            {highlightQuestionText(currentQuestion.question, highlightWords)}
           </div>
 
           {/* —— OPTIONS —— */}
@@ -181,4 +190,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default Scorecard;

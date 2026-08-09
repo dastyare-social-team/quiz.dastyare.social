@@ -1,5 +1,6 @@
 "use client";
 
+import Footer from "@/components/footer";
 import Header from "@/components/header";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
@@ -28,8 +29,12 @@ export default function layout({ children }: { children: React.ReactNode }) {
       <div className="border-2 border-primary/5 bg-white/10 overflow-y-scroll none-scroll-bar flex flex-col flex-1 w-full h-full">
         <Header />
 
-        <div className="flex flex-col items-center flex-1 w-full h-full">
-          <div className="lg:max-w-5xl w-full h-full">{children}</div>
+        <div className="pt-15 px-6.25 sm:pt-20 sm:px-12.5 flex flex-col items-center flex-1 w-full h-full">
+          <div className="lg:max-w-5xl w-full h-full">
+            {children}
+
+            <Footer />
+          </div>
         </div>
       </div>
     </div>

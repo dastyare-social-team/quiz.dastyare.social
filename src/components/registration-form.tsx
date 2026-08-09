@@ -269,13 +269,13 @@ const RegistrationForm = ({ primary_cta }: { primary_cta: string }) => {
         <div className="flex flex-col justify-center items-center gap-y-2.5 py-6 px-6 w-[350px] border border-secondary/5 rounded-3xl bg-background/50 backdrop-blur-3xl">
           <div className="flex flex-col gap-y-2">
             <div className="text-[25px] leading-8">
-              Lock In <span className="text-primary">Your Spot</span> for
-              Wednesday <span className="text-primary">— Don't Lose</span> Your
-              Seat
+              See Where Your Brand{" "}
+              <span className="text-primary">Really Stands —</span> Takes Under
+              5 Minutes
             </div>
             <div className="text-[20px] opacity-80">
-              — registration closes when this week's session starts. Miss it,
-              and you're waiting for the next one
+              — enter your name and email, then go straight into the first
+              question. Your results are waiting on the other side
             </div>
           </div>
 

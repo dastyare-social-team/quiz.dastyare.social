@@ -9,10 +9,10 @@ const ConfirmationCrossPromoteNum2SectionV2 = () => {
     <SectionWrapper>
       <div className="flex flex-col flex-1 gap-y-8">
         <div className="flex flex-col gap-y-1.5">
-          <h2>Want something to read before the workshop?</h2>
+          <h2>Want a place to start today?</h2>
           <p>
-            Grab the founder's guide to personal branding — positioning, content
-            structure, and how to turn attention into demand
+            Grab the founder's guide — positioning, content structure, and the
+            path from posting to actual demand
           </p>
         </div>
 

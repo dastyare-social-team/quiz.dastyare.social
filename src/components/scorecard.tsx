@@ -3,13 +3,13 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/button";
 import QuestionOption from "@/components/question-option";
+import { useRouter } from "next/navigation";
 import {
   getHighlightWords,
   Scorecard as scorecard_model,
   ScoreOption,
   ScoreQuestion,
-} from "@/config/scorecard";
-import { useRouter } from "next/navigation";
+} from "@/types";
 
 /* —— Helper that now accepts highlight words as parameter —— */
 function highlightQuestionText(text: string, highlightWords: string[]) {

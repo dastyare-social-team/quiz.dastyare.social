@@ -36,7 +36,7 @@ const config: ChartConfig = {
   },
 };
 
-export default function FiveVitalsSectionV1() {
+export default function ScoreFiveVitalsSectionV1() {
   return (
     <section className="border border-primary/5 rounded-md p-6">
       <h3 className="text-lg font-semibold text-primary">

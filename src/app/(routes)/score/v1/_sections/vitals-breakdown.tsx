@@ -23,7 +23,7 @@ function bandColor(score: number) {
   return "#059669"; // excellent
 }
 
-export default function VitalsBreakdownSectionV1() {
+export default function ScoreVitalsBreakdownSectionV1() {
   const ref = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
 

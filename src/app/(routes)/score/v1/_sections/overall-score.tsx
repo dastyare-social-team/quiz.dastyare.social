@@ -30,7 +30,7 @@ const chartConfig: ChartConfig = {
   },
 };
 
-export default function SectionOverallScoreV1({ score = 84 }: Props) {
+export default function ScoreOverallScoreSectionV1({ score = 84 }: Props) {
   const MAX = 100;
 
   const bands = [

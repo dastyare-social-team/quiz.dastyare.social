@@ -10,11 +10,11 @@ import ScoreVitalsBreakdownSectionV1 from "./_sections/vitals-breakdown";
 const Page = () => {
   return (
     <WindowLayout>
-      <ScoreOverallScoreSectionV1 />
+      {/* <ScoreOverallScoreSectionV1 />
 
       <ScoreFiveVitalsSectionV1 />
 
-      <ScoreVitalsBreakdownSectionV1 />
+      <ScoreVitalsBreakdownSectionV1 /> */}
 
       <ConfirmationCrossPromoteNum1SectionV1 />
 

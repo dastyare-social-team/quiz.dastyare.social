@@ -10,11 +10,31 @@ import SectionWrapper from "@/components/section-wrapper";
 
 const LandingSocialProofBlockNum2SectionV1 = () => {
   const avatars = [
-    { src: "/images/elon-musk.webp", alt: "@elonmusk", fallback: "EM" },
-    { src: "/images/gary-vaynerchuk.webp", alt: "@garyvee", fallback: "GV" },
-    { src: "/images/oprah-winfrey.webp", alt: "@oprahwinfrey", fallback: "OW" },
-    { src: "/images/taylor-swift.webp", alt: "@taylorswift", fallback: "TS" },
-    { src: "/images/justin-welsh.webp", alt: "@justinwelsh", fallback: "JW" },
+    {
+      src: "/images/sections/social-proof/elon-musk.webp",
+      alt: "@elonmusk",
+      fallback: "EM",
+    },
+    {
+      src: "/images/sections/social-proof/gary-vaynerchuk.webp",
+      alt: "@garyvee",
+      fallback: "GV",
+    },
+    {
+      src: "/images/sections/social-proof/oprah-winfrey.webp",
+      alt: "@oprahwinfrey",
+      fallback: "OW",
+    },
+    {
+      src: "/images/sections/social-proof/taylor-swift.webp",
+      alt: "@taylorswift",
+      fallback: "TS",
+    },
+    {
+      src: "/images/sections/social-proof/justin-welsh.webp",
+      alt: "@justinwelsh",
+      fallback: "JW",
+    },
   ];
 
   return (

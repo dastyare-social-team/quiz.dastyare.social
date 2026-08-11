@@ -2,6 +2,7 @@
 
 import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
+import Image from "next/image";
 
 const LandingThreeDreamOutcomeBlocksSectionV2 = () => {
   return (
@@ -22,7 +23,18 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = () => {
           <RegistrationForm primary_cta="Get Your Score — Now" />
         </div>
 
-        <div className="aspect-square flex-1 bg-primary/[1%] border-2 border-primary/5"></div>
+        <div
+          onContextMenu={(e) => e.preventDefault()}
+          className="aspect-3/4 flex-1 bg-primary/[1%] border-2 border-primary/5"
+        >
+          <Image
+            width={588}
+            height={588}
+            src="/images/sections/benefit-block-num-1.webp"
+            alt=""
+            className="px-1 py-1 aspect-3/4 object-cover"
+          />
+        </div>
       </SectionWrapper>
 
       <SectionWrapper>
@@ -41,7 +53,18 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = () => {
           <RegistrationForm primary_cta="Get Your Score — Now" />
         </div>
 
-        <div className="aspect-square flex-1 bg-primary/[1%] border-2 border-primary/5"></div>
+        <div
+          onContextMenu={(e) => e.preventDefault()}
+          className="aspect-3/4 flex-1 bg-primary/[1%] border-2 border-primary/5"
+        >
+          <Image
+            width={588}
+            height={588}
+            src="/images/sections/benefit-block-num-2.webp"
+            alt=""
+            className="px-1 py-1 aspect-3/4 object-cover"
+          />
+        </div>
       </SectionWrapper>
 
       <SectionWrapper className="md:flex-row-reverse">
@@ -59,7 +82,18 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = () => {
           <RegistrationForm primary_cta="Get Your Score — Now" />
         </div>
 
-        <div className="aspect-square flex-1 bg-primary/[1%] border-2 border-primary/5"></div>
+        <div
+          onContextMenu={(e) => e.preventDefault()}
+          className="aspect-3/4 flex-1 bg-primary/[1%] border-2 border-primary/5"
+        >
+          <Image
+            width={588}
+            height={588}
+            src="/images/sections/benefit-block-num-3.webp"
+            alt=""
+            className="px-1 py-1 aspect-3/4 object-cover"
+          />
+        </div>
       </SectionWrapper>
     </>
   );

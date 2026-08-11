@@ -2,6 +2,7 @@
 
 import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
+import Image from "next/image";
 
 const value_props = [
   "see your Personal Brand Health Score in under 5 minutes",
@@ -18,10 +19,16 @@ const LandingHeroSectionV1 = () => {
             Are You Ready to Know Your Personal Brand's Status?
           </p>
           <h2>
-            Stop Guessing Whether Your Personal Brand is Working <span className="text-primary">— No More Posting without Knowing</span> if it's Actually Healthy
+            Stop Guessing Whether Your Personal Brand is Working{" "}
+            <span className="text-primary">
+              — No More Posting without Knowing
+            </span>{" "}
+            if it's Actually Healthy
           </h2>
           <div className="flex flex-col gap-y-1">
-            A scorecard that tells you whether your Personal Brand is healthy enough to generate demand and make money — or quietly stalling — Takes under 5 minutes
+            A scorecard that tells you whether your Personal Brand is healthy
+            enough to generate demand and make money — or quietly stalling —
+            Takes under 5 minutes
           </div>
           <div className="flex flex-col gap-y-1">
             {value_props.map((value, index) => (
@@ -39,7 +46,19 @@ const LandingHeroSectionV1 = () => {
         </div>
       </div>
 
-      <div className="aspect-square flex-1 bg-primary/[1%] border-2 border-primary/5"></div>
+      <div
+        onContextMenu={(e) => e.preventDefault()}
+        className="aspect-3/4 flex-1 bg-primary/[1%] border-2 border-primary/5"
+      >
+        <Image
+          width={588}
+          height={588}
+          src="/images/sections/hero.webp"
+          loading="eager"
+          alt=""
+          className="px-1 py-1 aspect-3/4 object-cover"
+        />
+      </div>
     </SectionWrapper>
   );
 };

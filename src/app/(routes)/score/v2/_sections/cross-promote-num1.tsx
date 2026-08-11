@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/button";
 import SectionWrapper from "@/components/section-wrapper";
+import Image from "next/image";
 import Link from "next/link";
 
 const ConfirmationCrossPromoteNum1SectionV2 = () => {
@@ -25,7 +26,18 @@ const ConfirmationCrossPromoteNum1SectionV2 = () => {
         </Link>
       </div>
 
-      <div className="aspect-square flex-1 bg-primary/[1%] border-2 border-primary/5"></div>
+      <div
+        onContextMenu={(e) => e.preventDefault()}
+        className="aspect-3/4 flex-1 bg-primary/[1%] border-2 border-primary/5"
+      >
+        <Image
+          width={588}
+          height={588}
+          src="/images/sections/workshop-cross-promote.webp"
+          alt=""
+          className="px-1 py-1 aspect-3/4 object-cover"
+        />
+      </div>
     </SectionWrapper>
   );
 };

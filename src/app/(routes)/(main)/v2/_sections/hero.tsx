@@ -2,6 +2,7 @@
 
 import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
+import Image from "next/image";
 
 const LandingHeroSectionV2 = () => {
   return (
@@ -34,7 +35,19 @@ const LandingHeroSectionV2 = () => {
         </div>
       </div>
 
-      <div className="aspect-square flex-1 bg-primary/[1%] border-2 border-primary/5"></div>
+      <div
+        onContextMenu={(e) => e.preventDefault()}
+        className="aspect-3/4 flex-1 bg-primary/[1%] border-2 border-primary/5"
+      >
+        <Image
+          width={588}
+          height={588}
+          src="/images/sections/hero.webp"
+          loading="eager"
+          alt=""
+          className="px-1 py-1 aspect-3/4 object-cover"
+        />
+      </div>
     </SectionWrapper>
   );
 };

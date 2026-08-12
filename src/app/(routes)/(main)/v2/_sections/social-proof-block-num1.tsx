@@ -19,7 +19,7 @@ const LandingSocialProofBlockNum1SectionV2 = () => {
           &nbsp; not just more views
         </div>
 
-        <RegistrationForm primary_cta="Save My Seat — Now" />
+         <RegistrationForm primary_cta="Save My Seat — Now" cta_location="social-proof" />
       </div>
     </SectionWrapper>
   );

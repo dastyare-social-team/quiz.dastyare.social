@@ -93,7 +93,7 @@ const LandingWhyThisScorecardIsDifferentSectionV2 = async () => {
           </div>
         </div>
 
-        <RegistrationForm primary_cta="Get Your Score — Now" />
+         <RegistrationForm primary_cta="Get Your Score — Now" cta_location="why-different" />
       </div>
     </SectionWrapper>
   );

@@ -22,7 +22,7 @@ const LandingMeetTheHostSectionV2 = () => {
         </p>
 
         <div className="pt-5">
-          <RegistrationForm primary_cta="Get Your Score — Now" />
+           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="meet-the-host" />
         </div>
       </div>
 

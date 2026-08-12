@@ -20,7 +20,7 @@ const LandingThreeDreamOutcomeBlocksSectionV1 = () => {
             </p>
           </div>
 
-          <RegistrationForm primary_cta="Get Your Score — Now" />
+           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="three-dream-outcome" />
         </div>
 
         <div
@@ -50,7 +50,7 @@ const LandingThreeDreamOutcomeBlocksSectionV1 = () => {
             </p>
           </div>
 
-          <RegistrationForm primary_cta="Get Your Score — Now" />
+           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="three-dream-outcome" />
         </div>
 
         <div
@@ -79,7 +79,7 @@ const LandingThreeDreamOutcomeBlocksSectionV1 = () => {
             </p>
           </div>
 
-          <RegistrationForm primary_cta="Get Your Score — Now" />
+           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="three-dream-outcome" />
         </div>
 
         <div

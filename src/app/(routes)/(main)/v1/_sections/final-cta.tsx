@@ -29,7 +29,7 @@ const LandingFinalCTASectionV1 = () => {
         </div>
 
         <div className="pt-5">
-          <RegistrationForm primary_cta="Get Your Score — Now" />
+           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="final-cta" />
         </div>
       </div>
     </SectionWrapper>

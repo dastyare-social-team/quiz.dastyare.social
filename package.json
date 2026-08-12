@@ -18,6 +18,7 @@
     "motion": "^13.1.0",
     "next": "^16.2.2",
     "posthog-js": "^1.407.5",
+    "posthog-node": "^5.48.1",
     "radix-ui": "^1.6.7",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

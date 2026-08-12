@@ -27,7 +27,7 @@ const LandingProblemSectionV2 = () => {
           </p>
         </div>
 
-        <RegistrationForm primary_cta="Get Your Score — Now" />
+         <RegistrationForm primary_cta="Get Your Score — Now" cta_location="problem" />
       </div>
     </SectionWrapper>
   );

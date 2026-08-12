@@ -1,16 +1,18 @@
 import SectionWrapper from "@/components/section-wrapper";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/accordion";
+import FaqAccordion from "@/components/faq-accordion";
 import { Button } from "@/components/button";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 const LandingFAQSectionV2 = async () => {
   const t = await getTranslations("faq");
   const faqItems = Object.keys(t.raw("items") ?? {});
+
+  const items = faqItems.map((item) => ({
+    value: item,
+    question: t(`items.${item}.question`),
+    answer: t(`items.${item}.answer`),
+  }));
 
   return (
     <SectionWrapper className="justify-center items-center md:pb-10">
@@ -23,19 +25,7 @@ const LandingFAQSectionV2 = async () => {
           <p className="text-center">{t("description")}</p>
         </div>
 
-        <Accordion
-          type="single"
-          collapsible
-          defaultValue="q1"
-          className="max-w-5xl w-full"
-        >
-          {faqItems.map((item) => (
-            <AccordionItem key={item} value={item}>
-              <AccordionTrigger>{t(`items.${item}.question`)}</AccordionTrigger>
-              <AccordionContent>{t(`items.${item}.answer`)}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <FaqAccordion items={items} className="max-w-5xl w-full" />
 
         <div className="max-w-md text-center pt-5 flex flex-col gap-y-2.5 items-center">
           <h3>
@@ -45,9 +35,15 @@ const LandingFAQSectionV2 = async () => {
           <p className="text-[18px]">{t("contact.description")}</p>
 
           <div className="pt-5">
-            <Button variant="secondary" className="text-[18px] px-3.5 border">
-              {t("contact.button")}
-            </Button>
+            <Link
+              href="https://dastyare.social"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="secondary" className="text-[18px] px-3.5 border">
+                {t("contact.button")}
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

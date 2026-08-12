@@ -1,4 +1,5 @@
 import posthog from "posthog-js";
+import { CONSENT_COOKIE_NAME, VISITOR_ID_COOKIE_NAME } from "@/lib/consent";
 
 type PostHogEventProperties = Record<string, unknown>;
 
@@ -9,7 +10,61 @@ const posthogHost =
   process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() || "https://us.i.posthog.com";
 const isPostHogEnabled = Boolean(posthogKey);
 
+export type PostHogConsent = "granted" | "denied";
+
 let initialized = false;
+
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}=([^;]*)`),
+  );
+
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function setCookie(name: string, value: string, maxAgeDays: number) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${
+    maxAgeDays * 24 * 60 * 60
+  }; SameSite=Lax`;
+}
+
+export function getPostHogConsent(): PostHogConsent | null {
+  const value = getCookie(CONSENT_COOKIE_NAME);
+
+  if (value === "granted") {
+    return "granted";
+  }
+
+  if (value === "denied") {
+    return "denied";
+  }
+
+  return null;
+}
+
+export function getVisitorId(): string | null {
+  return getCookie(VISITOR_ID_COOKIE_NAME);
+}
+
+export function setPostHogConsent(consent: PostHogConsent) {
+  setCookie(CONSENT_COOKIE_NAME, consent, 365);
+
+  if (typeof window !== "undefined" && isPostHogEnabled) {
+    if (consent === "granted") {
+      posthog.opt_in_capturing();
+    } else {
+      posthog.opt_out_capturing();
+    }
+  }
+}
 
 export function initPostHog() {
   if (typeof window === "undefined" || initialized || !isPostHogEnabled) {
@@ -21,12 +76,30 @@ export function initPostHog() {
     return;
   }
 
+  const consent = getPostHogConsent();
+
   posthog.init(key, {
     api_host: posthogHost,
     capture_pageview: false,
     capture_pageleave: true,
+    mask_all_text: true,
+    mask_all_element_attributes: true,
+    opt_out_capturing_by_default: true,
     debug: process.env.NODE_ENV === "development",
   });
+
+  posthog.startSessionRecording();
+
+  // Align the client's distinct_id with the visitor_id used server-side for
+  // the landing experiment, so events link to the assigned variant.
+  const visitorId = getVisitorId();
+  if (visitorId) {
+    posthog.identify(visitorId);
+  }
+
+  if (consent === "granted") {
+    posthog.opt_in_capturing();
+  }
 
   initialized = true;
 }
@@ -61,180 +134,10 @@ export function captureException(
   posthog.captureException(error, properties);
 }
 
-export async function trackServerEvent(
-  distinctId: string,
-  event: string,
-  properties?: PostHogEventProperties,
-) {
-  const apiKey = process.env.POSTHOG_API_KEY?.trim();
-
-  if (!apiKey || typeof window !== "undefined") {
-    return;
-  }
-
-  try {
-    const batchUrl = new URL("/batch/", posthogHost).toString();
-    const payload = {
-      api_key: apiKey,
-      batch: [
-        {
-          event,
-          properties: {
-            distinct_id: distinctId,
-            ...(properties || {}),
-          },
-        },
-      ],
-    };
-
-    const response = await fetch(batchUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      console.error(
-        "PostHog server event failed:",
-        response.status,
-        response.statusText,
-        text,
-      );
-    }
-  } catch (error) {
-    console.error("PostHog server event failed:", error);
-  }
-}
-
-const posthogProjectId = process.env.POSTHOG_PROJECT_ID?.trim();
-const posthogApiKey = process.env.POSTHOG_API_KEY?.trim();
-
-let funnelInsightEnsured = false;
-
-export async function ensurePostHogFunnelExists() {
-  if (typeof window !== "undefined" || funnelInsightEnsured) {
-    return;
-  }
-
-  const apiKey = posthogApiKey;
-  const projectId = posthogProjectId;
-  if (!apiKey || !projectId) {
-    return;
-  }
-
-  try {
-    const funnelName = "Workshop funnel";
-    const listUrl = new URL(
-      `/api/projects/${projectId}/insights/`,
-      posthogHost,
-    );
-    listUrl.searchParams.set("search", funnelName);
-    listUrl.searchParams.set("insight", "FUNNELS");
-    listUrl.searchParams.set("basic", "true");
-
-    const listResponse = await fetch(listUrl.toString(), {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
-      },
-    });
-
-    if (!listResponse.ok) {
-      console.warn(
-        "PostHog funnel list failed with status",
-        listResponse.status,
-      );
-      return;
-    }
-
-    const listData = (await listResponse.json()) as {
-      results?: Array<{ name?: string }>;
-    };
-
-    const existingFunnel = Array.isArray(listData.results)
-      ? listData.results.some((item) => item.name === funnelName)
-      : false;
-
-    if (existingFunnel) {
-      funnelInsightEnsured = true;
-      return;
-    }
-
-    const createUrl = new URL(
-      `/api/projects/${projectId}/insights/`,
-      posthogHost,
-    );
-    const createPayload = {
-      name: funnelName,
-      description:
-        "Auto-created funnel for workshop landing and registration events.",
-      query: {
-        kind: "InsightVizNode",
-        source: {
-          kind: "FunnelsQuery",
-          funnelVizType: "steps",
-          funnelWindowInterval: 14,
-          funnelWindowIntervalUnit: "day",
-          filterTestAccounts: false,
-          series: [
-            {
-              kind: "EventsNode",
-              event: "landing_page_viewed",
-              name: "Landing page viewed",
-            },
-            {
-              kind: "EventsNode",
-              event: "registration_form_continue",
-              name: "Registration form continue",
-            },
-            {
-              kind: "EventsNode",
-              event: "registration_form_submit_success",
-              name: "Registration success",
-            },
-          ],
-        },
-      },
-    };
-
-    const createResponse = await fetch(createUrl.toString(), {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(createPayload),
-    });
-
-    if (!createResponse.ok) {
-      console.warn(
-        "PostHog funnel create failed with status",
-        createResponse.status,
-      );
-      return;
-    }
-
-    funnelInsightEnsured = true;
-  } catch (error) {
-    console.error("PostHog funnel creation failed:", error);
-  }
-}
-
-export async function trackAbTestAssignment(
-  variant: string,
-  experiment = "home_page_ab_test",
-  distinctId?: string,
-) {
-  await trackServerEvent(
-    distinctId ?? `ab_test_${variant}`,
-    "ab_test_assignment",
-    {
-      experiment,
-      variant,
-    },
-  );
+export function capturePageview(pathname: string, search = "") {
+  capture("$pageview", {
+    page: `${pathname}${search}`,
+    pathname,
+    search,
+  });
 }

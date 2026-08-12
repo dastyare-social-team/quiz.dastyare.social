@@ -117,7 +117,7 @@ const LandingWhyThisScorecardIsDifferentSectionV1 = async () => {
           <p>Not Another Vanity "Brand Audit"</p>
         </div>
 
-        <RegistrationForm primary_cta="Get Your Score — Now" />
+         <RegistrationForm primary_cta="Get Your Score — Now" cta_location="why-different" />
 
         {/* —— Comparison Table —— */}
         <Table className="w-full max-w-5xl overflow-x-scroll select-none">

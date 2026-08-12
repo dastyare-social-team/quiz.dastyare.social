@@ -15,7 +15,7 @@ const LandingHowItWorksSectionV2 = () => {
           </h2>
         </div>
 
-        <RegistrationForm primary_cta="Get Your Score — Now" />
+         <RegistrationForm primary_cta="Get Your Score — Now" cta_location="how-it-works" />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-5 mt-5">
           {/* —— COL #1 —— */}

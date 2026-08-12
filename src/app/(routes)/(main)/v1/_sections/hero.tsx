@@ -38,7 +38,7 @@ const LandingHeroSectionV1 = () => {
         </div>
 
         <div className="flex flex-col gap-y-2.5">
-          <RegistrationForm primary_cta="Get Your Score — Now" />
+           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="hero" />
 
           <div className="text-[18px] opacity-80 leading-6.5">
             under 5 minutes, quick start, straight into your assessment

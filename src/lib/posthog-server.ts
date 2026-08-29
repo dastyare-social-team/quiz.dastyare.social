@@ -1,26 +1,14 @@
-import { PostHog } from "posthog-node";
-
-const projectKey = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
-const projectHost =
-  process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() || "https://us.i.posthog.com";
+import { getServerPostHogClient, flushServerEvents } from "@/lib/analytics/server";
 
 const LANDING_FLAG_KEY =
   process.env.POSTHOG_LANDING_FLAG_KEY?.trim() || "home-page-variant";
 
-const isPostHogEnabled = Boolean(projectKey);
-
 export function isPostHogServerEnabled() {
-  return isPostHogEnabled;
+  return getServerPostHogClient() !== null;
 }
 
 function createPostHogServer() {
-  if (!isPostHogEnabled || !projectKey) {
-    return null;
-  }
-
-  return new PostHog(projectKey, {
-    host: projectHost,
-  });
+  return getServerPostHogClient();
 }
 
 export function resolveLandingVariant(
@@ -62,10 +50,11 @@ export async function getLandingVariant(
     console.error("PostHog feature flag evaluation failed:", error);
     return fallback;
   } finally {
+    // Flush (don't shutdown) — the client is a shared relay singleton.
     try {
-      await client.shutdown();
+      await flushServerEvents();
     } catch (error) {
-      console.error("PostHog server shutdown failed:", error);
+      console.error("PostHog server flush failed:", error);
     }
   }
 }

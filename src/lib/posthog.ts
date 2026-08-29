@@ -85,6 +85,8 @@ export function initPostHog() {
     mask_all_text: true,
     mask_all_element_attributes: true,
     opt_out_capturing_by_default: true,
+    capture_exceptions: true,
+    capture_heatmaps: true,
     debug: process.env.NODE_ENV === "development",
   });
 

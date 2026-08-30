@@ -15,22 +15,38 @@
  *   - PH_HOST                  (optional) defaults to https://us.i.posthog.com
  *   - PH_PROJECT_TOKEN         (optional) phc_ project token — used only to
  *                              sanity-check/report; NOT required to provision.
- *   - PH_DASHBOARD_LABEL       (optional) name of the project/repo this run
- *                              provisions for, e.g. "Workshop". When set, every
- *                              dashboard and insight name is suffixed with
- *                              " — {label}" so per-project suites can coexist in
- *                              one PostHog account (e.g. "Overview — Workshop").
+ *
+ * The dashboard label is a hardcoded constant (DASHBOARD_LABEL) below — every
+ * dashboard and insight name is suffixed with " — {label}" so per-project
+ * suites can coexist in one PostHog account (e.g. "Overview — Score Card").
+ *
+ * It also:
+ *   - enables the session replay and heatmaps products for the project,
+ *   - provisions the landing v1/v2 A/B split (feature flag + experiment),
+ *   - prompts for your app's remote deployed URL (used for the saved heatmaps;
+ *     set PH_DEPLOYED_URL to skip the prompt),
+ *   - attempts to create the app's saved heatmaps (HEATMAPS below) targeting
+ *     that URL, via POST /api/projects/{id}/saved/ (supported on a personal API
+ *     key with the heatmaps:write scope).
  *
  * The script validates the env vars and the personal API key (user identity +
  * project access), then provisions idempotently. Re-running is safe: existing
- * dashboards/insights are found by name and reused, not duplicated.
+ * dashboards/insights are found by name and reused, not duplicated. The landing
+ * A/B split (feature flag + experiment) is reset on every run — any existing
+ * matching experiment/flag is soft-deleted (PATCH { deleted: true }, the only
+ * delete the personal key allows) and exactly one labeled pair is recreated, so
+ * duplicates never accumulate. The A/B experiment/flag display names carry the
+ * same " — {label}" suffix as the dashboards.
  *
  * Usage:  bun run bootstrap:posthog
  */
 
 import "dotenv/config";
+import { createInterface } from "readline";
 
 const DEFAULT_HOST = "https://us.i.posthog.com";
+
+const DASHBOARD_LABEL = "Score Card";
 
 // ---------------------------------------------------------------------------
 // Config / env validation
@@ -41,7 +57,7 @@ interface Env {
   personalApiKey: string;
   host: string;
   projectToken: string | undefined;
-  dashboardLabel: string | undefined;
+  dashboardLabel: string;
 }
 
 function loadEnv(): Env {
@@ -49,13 +65,13 @@ function loadEnv(): Env {
   const personalApiKey = (process.env.PH_PERSONAL_API_KEY ?? "").trim();
   const host = (process.env.PH_HOST ?? "").trim() || DEFAULT_HOST;
   const projectToken = (process.env.PH_PROJECT_TOKEN ?? "").trim() || undefined;
-  const dashboardLabel = (process.env.PH_DASHBOARD_LABEL ?? "").trim() || undefined;
+  const dashboardLabel = DASHBOARD_LABEL;
 
   return { projectId, personalApiKey, host, projectToken, dashboardLabel };
 }
 
 const MISSING_LABELS: Array<[keyof Env, string, string]> = [
-  ["personalApiKey", "PH_PERSONAL_API_KEY", "phx_ personal API key with admin scope"],
+  ["personalApiKey", "PH_PERSONAL_API_KEY", "phx_ personal API key with admin scope"]
 ];
 
 function validateEnv(env: Env): boolean {
@@ -445,6 +461,298 @@ const DASHBOARDS: DashboardSpec[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Heatmaps: enable the product and create the app's saved heatmaps
+// ---------------------------------------------------------------------------
+
+const PROMPT_MAX_ATTEMPTS = 3;
+
+function normalizeDeployedUrl(input: string): string | null {
+  const trimmed = (input ?? "").trim();
+  if (!trimmed) return null;
+  let url: URL;
+  try {
+    url = /^https?:\/\//i.test(trimmed) ? new URL(trimmed) : new URL("https://" + trimmed);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+  return (url.origin + url.pathname).replace(/\/+$/, "");
+}
+
+function readLine(question: string): Promise<string> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question + " ", (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+/**
+ * The saved heatmaps target your remote deployed app. Ask the operator for that
+ * URL up front (PH_DEPLOYED_URL skips the prompt for automation), then build the
+ * absolute heatmap URLs from it.
+ */
+async function promptDeployedUrl(defaultDomain: string): Promise<string> {
+  const fromEnv = (process.env.PH_DEPLOYED_URL ?? "").trim();
+  if (fromEnv) {
+    console.log("  deployed url   : " + fromEnv + "  (from PH_DEPLOYED_URL)");
+    return normalizeDeployedUrl(fromEnv) ?? fromEnv;
+  }
+  for (let attempt = 1; attempt <= PROMPT_MAX_ATTEMPTS; attempt++) {
+    const answer = await readLine("Enter your remote deployed project URL (e.g. https://" + defaultDomain + "):");
+    const normalized = normalizeDeployedUrl(answer);
+    if (normalized) return normalized;
+    console.error("✗ '" + answer + "' is not a valid http(s) URL — try again.");
+  }
+  console.error("✗ Aborting after " + PROMPT_MAX_ATTEMPTS + " invalid attempts — nothing was created.");
+  process.exit(1);
+}
+
+interface HeatmapSpec {
+  name: string;
+  path: string;
+}
+
+const HEATMAPS: HeatmapSpec[] = [
+  { name: "Landing v1", path: "/v1" },
+  { name: "Landing v2", path: "/v2" },
+  { name: "Questions v1", path: "/questions/v1" },
+  { name: "Questions v2", path: "/questions/v2" },
+  { name: "Score v1", path: "/score/v1" },
+  { name: "Score v2", path: "/score/v2" }
+];
+
+async function ensureHeatmaps(env: Env, label: string | undefined, baseUrl: string): Promise<void> {
+  try {
+    await api(env, "PATCH", "/api/environments/" + env.projectId + "/", { heatmaps_opt_in: true });
+    const check = await api<{ heatmaps_opt_in?: boolean }>(
+      env,
+      "GET",
+      "/api/environments/" + env.projectId + "/"
+    );
+    if (check.heatmaps_opt_in) {
+      console.log("  ✓ Heatmaps product enabled for project " + env.projectId + " (verified).");
+    } else {
+      console.warn("  ⚠ Heatmaps product flag did not persist — check the project settings UI.");
+    }
+  } catch (err) {
+    console.warn(
+      "  ⚠ Could not enable/verify the heatmaps product: " + (err instanceof Error ? err.message : String(err))
+    );
+    return;
+  }
+
+  const nameFor = (base: string) => (label ? base + " — " + label : base);
+  const manual: string[] = [];
+
+  for (const heatmap of HEATMAPS) {
+    const displayName = nameFor(heatmap.name);
+    const url = baseUrl + heatmap.path;
+    try {
+      await api(env, "POST", "/api/projects/" + env.projectId + "/saved/", {
+        name: displayName,
+        url: url,
+        data_url: url,
+        type: "screenshot",
+        block_consent_modals: true,
+      });
+      console.log("  + created heatmap: " + displayName + "  (" + url + ")");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if ((err as ApiError).status === 403 || /personal API key/i.test(msg) || /permission_denied/i.test(msg)) {
+        manual.push(url + "  (" + displayName + ")");
+      } else {
+        console.warn('  ⚠ Could not create heatmap "' + displayName + '" (' + url + "): " + msg);
+      }
+    }
+  }
+
+  if (manual.length) {
+    console.warn(
+      "\n  ⚠ Could not create some saved heatmaps via the personal API key.\n" +
+        "    The heatmaps product is enabled. Create these saved heatmaps from the UI:\n" +
+        "      https://us.posthog.com/project/" + env.projectId + "/heatmaps\n" +
+        manual.map((u) => "        - " + u).join("\n")
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Replay: enable the session replay product for the project
+// ---------------------------------------------------------------------------
+
+async function ensureReplay(env: Env): Promise<void> {
+  try {
+    await api(env, "PATCH", "/api/environments/" + env.projectId + "/", { session_recording_opt_in: true });
+    const check = await api<{ session_recording_opt_in?: boolean }>(
+      env,
+      "GET",
+      "/api/environments/" + env.projectId + "/"
+    );
+    if (check.session_recording_opt_in) {
+      console.log("  ✓ Session replay product enabled for project " + env.projectId + " (verified).");
+    } else {
+      console.warn("  ⚠ Session replay product flag did not persist — check the project settings UI.");
+    }
+  } catch (err) {
+    console.warn("  ⚠ Could not enable/verify session replay: " + (err instanceof Error ? err.message : String(err)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Landing experiment: the v1/v2 homepage A/B split (feature flag + experiment)
+// ---------------------------------------------------------------------------
+
+const LANDING_FLAG_KEY = "home-page-variant-score-card";
+const LANDING_FLAG_NAME = "Feature Flag for Experiment Home page A/B test — Score Card";
+const LANDING_EXPERIMENT_NAME = "Home page A/B test — Score Card";
+const LANDING_EXPERIMENT_DESC =
+  "A/B test of the score card landing page. Visitors landing on / are redirected server-side to /v1 " +
+  "or /v2 based on this feature flag. The primary metric is the quiz funnel (landing_page_viewed -> " +
+  "questions_page_viewed -> score_result_viewed -> registration_cta_clicked -> registration_form_submit_success).";
+
+const LANDING_VARIANTS: Array<{ key: string; name: string; rollout_percentage: number }> = [
+  { key: "v1", name: "Variant 1", rollout_percentage: 50 },
+  { key: "v2", name: "Variant 2", rollout_percentage: 50 },
+];
+
+const LANDING_METRIC_SERIES = [
+  { kind: "EventsNode", event: "landing_page_viewed" },
+  { kind: "EventsNode", event: "questions_page_viewed" },
+  { kind: "EventsNode", event: "score_result_viewed" },
+  { kind: "EventsNode", event: "registration_cta_clicked" },
+  { kind: "EventsNode", event: "registration_form_submit_success" },
+];
+
+async function findFeatureFlagByKey(env: Env, key: string): Promise<{ id?: number; key?: string; deleted?: boolean } | null> {
+  const res = await api<{ results?: Array<{ id?: number; key?: string; deleted?: boolean }> }>(
+    env,
+    "GET",
+    "/api/projects/" + env.projectId + "/feature_flags/?limit=100"
+  );
+  return res.results?.find((f) => f.key === key && !f.deleted) ?? null;
+}
+
+async function listMatchingExperiments(
+  env: Env
+): Promise<Array<{ id?: number; name?: string; feature_flag_key?: string; deleted?: boolean }>> {
+  const res = await api<{ results?: Array<{ id?: number; name?: string; feature_flag_key?: string; deleted?: boolean }> }>(
+    env,
+    "GET",
+    "/api/projects/" + env.projectId + "/experiments/?limit=100"
+  );
+  return (res.results ?? []).filter(
+    (e) => !e.deleted && (e.feature_flag_key === LANDING_FLAG_KEY || e.name === LANDING_EXPERIMENT_NAME)
+  );
+}
+
+async function ensureLandingExperiment(env: Env): Promise<void> {
+  // Reset: soft-delete any existing experiments and the feature flag for this
+  // A/B test so every run converges to exactly one canonical flag + experiment.
+  // Without this, re-runs (or overlapping runs pointing at the same project)
+  // accumulate duplicate "Home page A/B test" experiments. The public API only
+  // allows PATCH { deleted: true } (soft delete) — plain DELETE returns 405.
+  const experiments = await listMatchingExperiments(env);
+  for (const e of experiments) {
+    if (e.id == null) continue;
+    try {
+      await api(env, "PATCH", `/api/projects/${env.projectId}/experiments/${e.id}/`, { deleted: true });
+      console.log("  ✗ deleted experiment: " + LANDING_EXPERIMENT_NAME + "  (" + e.id + ")");
+    } catch (err) {
+      console.warn(
+        "  ⚠ Could not delete experiment " + e.id + ": " + (err instanceof Error ? err.message : String(err))
+      );
+    }
+  }
+
+  const flag = await findFeatureFlagByKey(env, LANDING_FLAG_KEY);
+  if (flag && flag.id != null) {
+    try {
+      await api(env, "PATCH", `/api/projects/${env.projectId}/feature_flags/${flag.id}/`, { deleted: true });
+      console.log("  ✗ deleted feature flag: " + LANDING_FLAG_KEY + "  (" + flag.id + ")");
+    } catch (err) {
+      console.warn(
+        "  ⚠ Could not delete feature flag " + LANDING_FLAG_KEY + ": " +
+          (err instanceof Error ? err.message : String(err))
+      );
+    }
+  }
+
+  // Create exactly one fresh flag.
+  try {
+    await api(env, "POST", "/api/projects/" + env.projectId + "/feature_flags/", {
+      name: LANDING_FLAG_NAME,
+      key: LANDING_FLAG_KEY,
+      active: true,
+      filters: {
+        groups: [{ properties: [], rollout_percentage: 100 }],
+        multivariate: { variants: LANDING_VARIANTS },
+      },
+    });
+    console.log("+ created feature flag: " + LANDING_FLAG_KEY);
+  } catch (err) {
+    console.warn(
+      "  ⚠ Could not create feature flag " + LANDING_FLAG_KEY + ": " +
+        (err instanceof Error ? err.message : String(err))
+    );
+    return;
+  }
+
+  const experimentBody = (extra: Record<string, unknown>) => ({
+    name: LANDING_EXPERIMENT_NAME,
+    description: LANDING_EXPERIMENT_DESC,
+    feature_flag_key: LANDING_FLAG_KEY,
+    start_date: new Date().toISOString(),
+    type: "product",
+    metrics: [
+      {
+        goal: "increase",
+        kind: "ExperimentMetric",
+        name: "Quiz funnel",
+        series: LANDING_METRIC_SERIES,
+        metric_type: "funnel",
+        conversion_window: 14,
+      },
+    ],
+    filters: { filterTestAccounts: true },
+    ...extra,
+  });
+
+  try {
+    await api(env, "POST", "/api/projects/" + env.projectId + "/experiments/", experimentBody({}));
+    console.log("+ created experiment: " + LANDING_EXPERIMENT_NAME);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/allow_unknown_events/i.test(msg)) {
+      console.log("  (experiment events not yet ingested in this project — retrying with allow_unknown_events)");
+      try {
+        await api(
+          env,
+          "POST",
+          "/api/projects/" + env.projectId + "/experiments/",
+          experimentBody({ allow_unknown_events: true })
+        );
+        console.log("+ created experiment: " + LANDING_EXPERIMENT_NAME + " (events pending app deployment)");
+        return;
+      } catch (err2) {
+        console.warn(
+          '  ⚠ Could not create experiment "' + LANDING_EXPERIMENT_NAME + '": ' +
+            (err2 instanceof Error ? err2.message : String(err2)) +
+            " — create it from the UI: https://us.posthog.com/project/" + env.projectId + "/experiments/new"
+        );
+        return;
+      }
+    }
+    console.warn(
+      '  ⚠ Could not create experiment "' + LANDING_EXPERIMENT_NAME + '": ' + msg +
+        " — create it from the UI: https://us.posthog.com/project/" + env.projectId + "/experiments/new"
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -466,6 +774,9 @@ async function main() {
     process.exit(1);
   }
 
+  const deployedUrl = await promptDeployedUrl("quiz.dastyare.social");
+  console.log("  → heatmaps will target: " + deployedUrl);
+
   console.log("\nProvisioning …\n");
   console.log("Dashboards & insights\n");
 
@@ -479,6 +790,15 @@ async function main() {
       await ensureInsight(env, { name: nameFor(insight.name), query: insight.query }, dashboard.id);
     }
   }
+
+  console.log("\nFeature flag & experiment\n");
+  await ensureLandingExperiment(env);
+
+  console.log("\nReplay\n");
+  await ensureReplay(env);
+
+  console.log("\nHeatmaps\n");
+  await ensureHeatmaps(env, label, deployedUrl);
 
   console.log("\n✓ Bootstrap complete.");
   console.log("  Project: " + env.projectId + "  Host: " + env.host);

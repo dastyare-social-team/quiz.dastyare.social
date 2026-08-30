@@ -8,23 +8,35 @@ Everything that has been set up / done on this project so far:
 
 - **Pages** — A/B landing (`/v1`, `/v2`), questions (`/questions/v1`, `/questions/v2`), score result (`/score/v1`, `/score/v2`). A server-side `/` redirect picks a landing variant based on the PostHog flag `home-page-variant` (cookie `home_ab_variant`, fallback `/v1`).
 - **PostHog analytics** — consent-gated (`posthog_consent` cookie), session replay with full text/attribute masking, scroll depth, button/link/outbound-click tracking, plus the quiz + registration funnel events. (This project has **no** dedicated `POSTHOG.md`; the shared event/tracking setup mirrors the workshop and magnet sites.)
-- **PostHog dashboards** — the standard audience-neutral PostHog suite (8 dashboards, ~40 insights — see the [bootstrap section](#dev-team-relay--bootstrap)) is provisioned identically on both PostHog accounts. Shares the same PostHog project as the workshop/magnet sites; quiz/registration funnels are part of the suite.
+- **PostHog dashboards** — this project's suite (Overview, Conversion, Reliability — see the [bootstrap section](#dev-team-relay--bootstrap)) is provisioned by `scripts/posthog-bootstrap.ts` on both PostHog accounts and suffixed ` — Score Card` so it coexists with the workshop/magnet/cs suites in the same account.
 - **Shared A/B experiment** — reuses `Home page A/B test` (PostHog experiment, flag `home-page-variant`, variants `v1`/`v2`, 50/50, 100% rollout) shared with the workshop and magnet sites.
 
 ### PostHog dashboards (as provisioned)
 
-The standard suite's **Onboarding & Conversion** dashboard hosts the funnels relevant to this project (14-day window by default). All three insights below are part of the provisioned suite:
+`scripts/posthog-bootstrap.ts` provisions this project's suite — the landing
+dashboards plus the quiz journey (all funnels 14-day window by default), using
+only events this app captures:
+
+- **Overview** — Unique Visitors (DAU), Weekly Active Users (WAU), Pageviews,
+  Top Pages (`pathname` breakdown).
+- **Conversion** — Registration Funnel, Quiz & Registration Journey, Landing
+  Engagement, CTA Performance by Section (`cta_location` breakdown), Questions
+  Started, Scores Generated, Confirmation Views, Form Validation Failures,
+  Button Clicks, FAQ Opens.
+- **Reliability** — Web Vitals, Uncaught Exceptions, Client Errors.
+
+The funnels relevant to this project are shown below (all part of the suite):
 
 | Insight | Type | Steps |
 | --- | --- | --- |
-| Registration funnel | Funnel (14-day) | `landing_page_viewed` → `registration_cta_clicked` → `registration_form_continue` → `registration_form_submit_success` → `confirmation_page_viewed` |
-| Quiz & registration journey | Funnel (14-day) | `landing_page_viewed` → `questions_page_viewed` → `score_result_viewed` → `registration_form_submit_success` |
-| CTA performance by section | Funnel (14-day), broken down by `cta_location` | `registration_cta_clicked` → `registration_form_submit_success` |
+| Registration Funnel | Funnel (14-day) | `landing_page_viewed` → `registration_cta_clicked` → `registration_form_continue` → `registration_form_submit_success` → `confirmation_page_viewed` |
+| Quiz & Registration Journey | Funnel (14-day) | `landing_page_viewed` → `questions_page_viewed` → `score_result_viewed` → `registration_cta_clicked` → `registration_form_submit_success` |
+| CTA Performance by Section | Funnel (14-day), broken down by `cta_location` | `registration_cta_clicked` → `registration_form_submit_success` |
 
 If site-specific isolation is needed, add a `$host` filter to these insights (the suite itself is deliberately not host-scoped).
 
-> **Provisioning:** these dashboards/insights are provisioned by the standard
-> suite in `scripts/posthog-bootstrap.ts` (see the [Dev-team relay & bootstrap](#dev-team-relay--bootstrap)
+> **Provisioning:** these dashboards/insights are provisioned by the suite in
+> `scripts/posthog-bootstrap.ts` (see the [Dev-team relay & bootstrap](#dev-team-relay--bootstrap)
 > section) — no folders are used, so provisioning is fully API-driven.
 
 ## Landing
@@ -82,13 +94,15 @@ Routes: `/score/v1`, `/score/v2`
   `DISABLE_DEV_TEAM_PH=true` to disable the relay fan-out (direct captures still
   work).
 - **PostHog bootstrap** — `scripts/posthog-bootstrap.ts` (run via
-  `bun run bootstrap:posthog`) provisions the standard, audience-neutral dashboard
-  suite (8 dashboards: Overview, Onboarding & Conversion, Content Engagement,
-  User Growth, Push Notifications, LLM & AI Visibility, MCP Usage, Reliability —
-  ~40 insights) via the admin REST API, identically on every account. It is
-  idempotent and needs `PH_PERSONAL_API_KEY` (`phx_`, admin scope), optional
+  `bun run bootstrap:posthog`) provisions this project's suite (3 dashboards:
+  Overview, Conversion, Reliability — with the quiz & registration journey)
+  via the admin REST API, using only events this app captures. It is idempotent
+  and needs `PH_PERSONAL_API_KEY` (`phx_`, admin scope), optional
   `PH_PROJECT_ID` (auto-discovered from the key's `@current` project), and
-  `PH_HOST`. See `.env.example` for placeholders.
+  `PH_HOST`. Set `PH_DASHBOARD_LABEL` to suffix every dashboard/insight with
+  ` — {label}` (e.g. `Overview — Score Card`) so per-product suites coexist in
+  one account. Transient 429/5xx responses are retried with backoff. See
+  `.env.example` for placeholders.
 
 ## Data products (session replay, error tracking, heatmaps)
 

@@ -1,11 +1,10 @@
 /**
  * PostHog analytics bootstrap.
  *
- * Provisions a standard set of dashboards and insights on a PostHog project
- * via the public REST API. The same suite is meant for every PostHog account
- * (a self-hosted instance, a customer's cloud project, or our own internal
- * instances) — nothing here is audience-specific, so this script is the single
- * source of truth for "the dashboards this product ships with".
+ * Provisions the dashboards and insights this app ships with on a PostHog
+ * project via the public REST API. The suite mirrors what the app actually
+ * captures — only events the codebase emits are referenced, so no dashboard
+ * or insight is created for features this project does not have.
  *
  * Target project is read from the environment:
  *
@@ -16,6 +15,11 @@
  *   - PH_HOST                  (optional) defaults to https://us.i.posthog.com
  *   - PH_PROJECT_TOKEN         (optional) phc_ project token — used only to
  *                              sanity-check/report; NOT required to provision.
+ *   - PH_DASHBOARD_LABEL       (optional) name of the project/repo this run
+ *                              provisions for, e.g. "Workshop". When set, every
+ *                              dashboard and insight name is suffixed with
+ *                              " — {label}" so per-project suites can coexist in
+ *                              one PostHog account (e.g. "Overview — Workshop").
  *
  * The script validates the env vars and the personal API key (user identity +
  * project access), then provisions idempotently. Re-running is safe: existing
@@ -37,6 +41,7 @@ interface Env {
   personalApiKey: string;
   host: string;
   projectToken: string | undefined;
+  dashboardLabel: string | undefined;
 }
 
 function loadEnv(): Env {
@@ -44,8 +49,9 @@ function loadEnv(): Env {
   const personalApiKey = (process.env.PH_PERSONAL_API_KEY ?? "").trim();
   const host = (process.env.PH_HOST ?? "").trim() || DEFAULT_HOST;
   const projectToken = (process.env.PH_PROJECT_TOKEN ?? "").trim() || undefined;
+  const dashboardLabel = (process.env.PH_DASHBOARD_LABEL ?? "").trim() || undefined;
 
-  return { projectId, personalApiKey, host, projectToken };
+  return { projectId, personalApiKey, host, projectToken, dashboardLabel };
 }
 
 const MISSING_LABELS: Array<[keyof Env, string, string]> = [
@@ -90,6 +96,11 @@ function validateEnv(env: Env): boolean {
         ? "  project token   : " + env.projectToken.slice(0, 8) + "… (informational)"
         : "  project token   : (unset — fine, not required to provision)"
     );
+    console.log(
+      env.dashboardLabel
+        ? "  dashboard label : " + env.dashboardLabel + "  (names suffixed with \" — " + env.dashboardLabel + "\")"
+        : "  dashboard label : (unset — neutral dashboard names)"
+    );
   } else {
     console.error(
       "\nMissing/undefined config detected. Fix the variables above and re-run.\n" +
@@ -126,30 +137,60 @@ interface ApiError extends Error {
   body?: unknown;
 }
 
+const MAX_API_ATTEMPTS = 10;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function api<T = unknown>(env: Env, method: string, path: string, body?: unknown): Promise<T> {
   const url = env.host.replace(/\/$/, "") + path;
-  const res = await fetch(url, {
-    method,
-    headers: {
-      Authorization: "Bearer " + env.personalApiKey,
-      "Content-Type": "application/json",
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let backoffMs = 2000;
 
-  const text = await res.text();
-  const json = text ? safeJson(text) : undefined;
+  for (let attempt = 1; attempt <= MAX_API_ATTEMPTS; attempt++) {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        Authorization: "Bearer " + env.personalApiKey,
+        "Content-Type": "application/json",
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
 
-  if (!res.ok) {
-    const err = new Error(
-      `HTTP ${res.status} ${method} ${path} — ${res.statusText} ${json ? JSON.stringify(json) : ""}`
-    ) as ApiError;
-    err.status = res.status;
-    err.body = json;
-    throw err;
+    const text = await res.text();
+    const json = text ? safeJson(text) : undefined;
+
+    if ((res.status === 429 || res.status >= 500) && attempt < MAX_API_ATTEMPTS) {
+      let wait = backoffMs;
+      const retryAfter = res.headers.get("retry-after");
+      if (retryAfter) {
+        const secs = Number(retryAfter);
+        if (!Number.isNaN(secs)) wait = secs * 1000;
+      } else if (json && typeof json === "object" && typeof (json as { detail?: unknown }).detail === "string") {
+        const m = /Expected available in (\d+) seconds?/.exec((json as { detail: string }).detail);
+        if (m) wait = (Number(m[1]) + 1) * 1000;
+      }
+      console.log(
+        `  ⏳ rate limited (HTTP ${res.status}) — retrying in ${Math.round(wait / 1000)}s (attempt ${attempt}/${MAX_API_ATTEMPTS})`
+      );
+      await sleep(wait);
+      backoffMs = Math.min(backoffMs * 1.5, 30000);
+      continue;
+    }
+
+    if (!res.ok) {
+      const err = new Error(
+        `HTTP ${res.status} ${method} ${path} — ${res.statusText} ${json ? JSON.stringify(json) : ""}`
+      ) as ApiError;
+      err.status = res.status;
+      err.body = json;
+      throw err;
+    }
+
+    return json as T;
   }
 
-  return json as T;
+  throw new Error(`HTTP request gave up after ${MAX_API_ATTEMPTS} attempts: ${method} ${path}`);
 }
 
 function safeJson(text: string): unknown {
@@ -221,7 +262,7 @@ async function ensureDashboard(env: Env, name: string, description: string): Pro
   const created = await api<Dashboard>(env, "POST", "/api/projects/" + env.projectId + "/dashboards/", {
     name,
     description,
-    filters: { events: [] },
+    filters: {},
   });
   console.log("+ created dashboard: " + name + "  (" + created.id + ")");
   return created;
@@ -335,42 +376,10 @@ function funnel(
   };
 }
 
-/** RetentionQuery — how often users come back after their first qualifying event. */
-function retention(
-  event: string,
-  opts: { returning?: string; period?: string; intervals?: number; type?: string; reference?: string } = {}
-): unknown {
-  const entity = (name: string) => ({ id: name, name, type: "events" });
-  const returning = opts.returning ?? event;
-  return {
-    kind: "InsightVizNode",
-    source: {
-      kind: "RetentionQuery",
-      retentionFilter: {
-        period: opts.period ?? "Week",
-        totalIntervals: opts.intervals ?? 8,
-        targetEntity: entity(event),
-        returningEntity: entity(returning),
-        retentionType: opts.type ?? "retention_first_time",
-        retentionReference: opts.reference ?? "total",
-        cumulative: false,
-      },
-      dateRange: { date_from: "-60d" },
-    },
-  };
-}
-
 const ev = (event: string, extra: Record<string, unknown> = {}): unknown => ({
   kind: "EventsNode",
   event,
   ...extra,
-});
-
-const prop = (key: string, value: unknown, operator = "exact") => ({
-  key,
-  operator,
-  type: "event" as const,
-  value: Array.isArray(value) ? value : [value],
 });
 
 // ---------------------------------------------------------------------------
@@ -394,113 +403,43 @@ const REGISTRATION_FUNNEL: Array<string | { event: string; properties?: unknown[
 const DASHBOARDS: DashboardSpec[] = [
   {
     name: "Overview",
-    description: "High-level site and product health: visitors, pageviews, performance and content creation.",
+    description: "Site health: visitors, pageviews and top pages from the landing pages.",
     insights: [
-      { name: "Unique visitors (DAU)", query: trends([ev("$pageview", { math: "dau" })]) },
-      { name: "Weekly active users (WAU)", query: trends([ev("$pageview", { math: "weekly_active" })]) },
-      { name: "Monthly active users (MAU)", query: trends([ev("$pageview", { math: "monthly_active" })]) },
+      { name: "Unique Visitors (DAU)", query: trends([ev("$pageview", { math: "dau" })]) },
+      { name: "Weekly Active Users (WAU)", query: trends([ev("$pageview", { math: "weekly_active" })]) },
       { name: "Pageviews", query: trends([ev("$pageview", { math: "total" })]) },
-      { name: "Web vitals", query: trends([ev("$web_vitals", { math: "total" })]) },
-      { name: "Pageviews by page type", query: trends([ev("$pageview")], { breakdown: "page_type" }) },
-      { name: "Top pages", query: trends([ev("$pageview")], { breakdown: "path", breakdownLimit: 20 }) },
-      { name: "Post creation rate", query: trends([ev("post_created", { math: "total" })]) },
-      { name: "New visitors (first time)", query: trends([ev("$pageview", { math: "first_time_for_user" })]) },
+      { name: "Top Pages", query: trends([ev("$pageview")], { breakdown: "pathname", breakdownLimit: 20 }) },
     ],
   },
   {
-    name: "Onboarding & Conversion",
-    description: "Funnels across the visitor → registration journey and content activation.",
+    name: "Conversion",
+    description: "Landing → quiz → registration → confirmation funnel and engagement signals.",
     insights: [
-      { name: "Registration funnel", query: funnel(REGISTRATION_FUNNEL) },
-      { name: "Landing engagement", query: funnel(["$pageview", "scroll_depth_50", "registration_cta_clicked"]) },
+      { name: "Registration Funnel", query: funnel(REGISTRATION_FUNNEL) },
       {
-        name: "CTA performance by section",
+        name: "Quiz & Registration Journey",
+        query: funnel(["landing_page_viewed", "questions_page_viewed", "score_result_viewed", "registration_cta_clicked", "registration_form_submit_success"]),
+      },
+      { name: "Landing Engagement", query: funnel(["$pageview", "scroll_depth_50", "registration_cta_clicked"]) },
+      {
+        name: "CTA Performance by Section",
         query: funnel(["registration_cta_clicked", "registration_form_submit_success"], { breakdown: "cta_location" }),
       },
-      {
-        name: "Quiz & registration journey",
-        query: funnel(["landing_page_viewed", "questions_page_viewed", "score_result_viewed", "registration_form_submit_success"]),
-      },
-      { name: "Visitor to subscriber", query: funnel(["$pageview", "push_subscription_enabled"], { window: 30 }) },
-      { name: "Visitor to creator", query: funnel(["$pageview", "post_created"], { window: 30 }) },
-      { name: "Post to engagement", query: funnel(["post_created", "post_viewed", "post_reacted"], { window: 7 }) },
-    ],
-  },
-  {
-    name: "Content Engagement",
-    description: "What content performs best — posts, stories, reactions and formats.",
-    insights: [
-      { name: "Posts by type", query: trends([ev("post_created")], { breakdown: "post_type" }) },
-      { name: "Post views over time", query: trends([ev("post_viewed", { math: "total" })]) },
-      { name: "Reactions per post", query: trends([ev("post_reacted")], { breakdown: "emoji" }) },
-      { name: "Most reacted posts", query: trends([ev("post_reacted")], { breakdown: "post_id", breakdownLimit: 20 }) },
-      { name: "Media vs text-only posts", query: trends([ev("post_created")], { breakdown: "has_media" }) },
-      {
-        name: "Story engagement",
-        query: trends([ev("story_viewed", { math: "total" }), ev("story_liked", { math: "total" })]),
-      },
-    ],
-  },
-  {
-    name: "User Growth",
-    description: "New and returning users, weekly retention and push opt-in.",
-    insights: [
-      { name: "New visitors (first time)", query: trends([ev("$pageview", { math: "first_time_for_user" })]) },
-      { name: "Weekly retention", query: retention("$pageview", { period: "Week", intervals: 8 }) },
-      {
-        name: "Push opt-ins vs opt-outs",
-        query: trends([ev("push_subscription_enabled", { math: "total" }), ev("push_subscription_disabled", { math: "total" })]),
-      },
-    ],
-  },
-  {
-    name: "Push Notifications",
-    description: "Push subscription and delivery health.",
-    insights: [
-      {
-        name: "Push subscriptions over time",
-        query: trends([ev("push_subscription_enabled", { math: "total" }), ev("push_subscription_disabled", { math: "total" })]),
-      },
-      { name: "Push send volume", query: trends([ev("push_notifications_sent", { math: "total" })]) },
-      {
-        name: "Push sends vs skipped",
-        query: trends([ev("push_notifications_sent", { math: "total" }), ev("push_notifications_skipped", { math: "total" })]),
-      },
-      { name: "Push subscription failures", query: trends([ev("push_subscription_failed", { math: "total" })]) },
-    ],
-  },
-  {
-    name: "LLM & AI Visibility",
-    description: "How AI agents and LLM crawlers discover and use the platform.",
-    insights: [
-      { name: "LLM asset requests", query: trends([ev("llm_asset_requested")], { breakdown: "asset" }) },
-      { name: "LLM vs human traffic", query: trends([ev("$pageview")], { breakdown: "page_type" }) },
-      {
-        name: "OpenAPI spec downloads",
-        query: trends([ev("$pageview", { properties: [prop("path", "/openapi.json")] })]),
-      },
-      { name: "MCP discovery (sessions by auth)", query: trends([ev("mcp_session_created")], { breakdown: "authenticated" }) },
-    ],
-  },
-  {
-    name: "MCP Usage",
-    description: "Model Context Protocol server and tool usage.",
-    insights: [
-      { name: "MCP sessions created", query: trends([ev("mcp_session_created", { math: "total" })]) },
-      { name: "MCP tool calls", query: trends([ev("mcp_tool_called", { math: "total" })]) },
-      { name: "Most used MCP tools", query: trends([ev("mcp_tool_called")], { breakdown: "tool", breakdownLimit: 20 }) },
-      { name: "MCP auth vs anonymous", query: trends([ev("mcp_tool_called")], { breakdown: "authenticated" }) },
-      { name: "MCP tool errors", query: trends([ev("mcp_tool_called")], { breakdown: "isError" }) },
-      { name: "Server key probes", query: trends([ev("server_key_probe", { math: "total" })]) },
+      { name: "Questions Started", query: trends([ev("questions_page_viewed", { math: "total" })]) },
+      { name: "Scores Generated", query: trends([ev("score_result_viewed", { math: "total" })]) },
+      { name: "Confirmation Views", query: trends([ev("confirmation_page_viewed", { math: "total" })]) },
+      { name: "Form Validation Failures", query: trends([ev("registration_form_validation_failed", { math: "total" })]) },
+      { name: "Button Clicks", query: trends([ev("button_clicked", { math: "total" })]) },
+      { name: "FAQ Opens", query: trends([ev("faq_question_opened", { math: "total" })]) },
     ],
   },
   {
     name: "Reliability",
-    description: "Web vitals and client / server errors.",
+    description: "Web performance and client-side errors.",
     insights: [
-      { name: "Web vitals", query: trends([ev("$web_vitals", { math: "total" })]) },
-      { name: "Uncaught exceptions", query: trends([ev("$exception", { math: "total" })]) },
-      { name: "Client errors", query: trends([ev("client_error", { math: "total" })]) },
+      { name: "Web Vitals", query: trends([ev("$web_vitals", { math: "total" })]) },
+      { name: "Uncaught Exceptions", query: trends([ev("$exception", { math: "total" })]) },
+      { name: "Client Errors", query: trends([ev("client_error", { math: "total" })]) },
     ],
   },
 ];
@@ -530,16 +469,20 @@ async function main() {
   console.log("\nProvisioning …\n");
   console.log("Dashboards & insights\n");
 
+  const label = env.dashboardLabel;
+  const nameFor = (base: string) => (label ? base + " — " + label : base);
+
   for (const spec of DASHBOARDS) {
-    const dashboard = await ensureDashboard(env, spec.name, spec.description);
+    const dashboard = await ensureDashboard(env, nameFor(spec.name), spec.description);
 
     for (const insight of spec.insights) {
-      await ensureInsight(env, insight, dashboard.id);
+      await ensureInsight(env, { name: nameFor(insight.name), query: insight.query }, dashboard.id);
     }
   }
 
   console.log("\n✓ Bootstrap complete.");
   console.log("  Project: " + env.projectId + "  Host: " + env.host);
+  if (label) console.log("  Label  : " + label + "  (dashboards/insights suffixed \" — " + label + "\")");
   if (env.projectToken) {
     console.log("  Note: PH_PROJECT_TOKEN is informational only — ingestion uses your app env, not this script.");
   }

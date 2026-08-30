@@ -1,26 +1,25 @@
 /**
- * PostHog dev-team bootstrap.
+ * PostHog analytics bootstrap.
  *
- * Provisions the dev-team folder tree, dashboards, and insights on a PostHog
- * project via the public REST API. Intended to be run by each developer so
- * their own dev PostHog account has the same structure as the shared team
- * instance — no manual clicking.
+ * Provisions a standard set of dashboards and insights on a PostHog project
+ * via the public REST API. The same suite is meant for every PostHog account
+ * (a self-hosted instance, a customer's cloud project, or our own internal
+ * instances) — nothing here is audience-specific, so this script is the single
+ * source of truth for "the dashboards this product ships with".
  *
- * Target project is read from the environment so the same script works for any
- * developer, pointing at their own project:
+ * Target project is read from the environment:
  *
  *   - PH_PROJECT_ID            (optional) numeric id of the target project.
  *                              Discovered from the personal API key's @current
  *                              project when unset.
- *   - PH_PERSONAL_API_KEY      (required) phx_ key with admin + file_system scope
+ *   - PH_PERSONAL_API_KEY      (required) phx_ key with admin scope
  *   - PH_HOST                  (optional) defaults to https://us.i.posthog.com
  *   - PH_PROJECT_TOKEN         (optional) phc_ project token — used only to
  *                              sanity-check/report; NOT required to provision.
  *
- * The script validates the env vars and the personal API key (project access,
- * file_system:read), reporting any missing/undefined config, then provisions
- * idempotently. Re-running is safe: existing dashboards/insights are found by
- * name and reused, not duplicated.
+ * The script validates the env vars and the personal API key (user identity +
+ * project access), then provisions idempotently. Re-running is safe: existing
+ * dashboards/insights are found by name and reused, not duplicated.
  *
  * Usage:  bun run bootstrap:posthog
  */
@@ -50,7 +49,7 @@ function loadEnv(): Env {
 }
 
 const MISSING_LABELS: Array<[keyof Env, string, string]> = [
-  ["personalApiKey", "PH_PERSONAL_API_KEY", "phx_ personal API key with admin + file_system scope"],
+  ["personalApiKey", "PH_PERSONAL_API_KEY", "phx_ personal API key with admin scope"],
 ];
 
 function validateEnv(env: Env): boolean {
@@ -62,10 +61,10 @@ function validateEnv(env: Env): boolean {
   }
 
   if (!env.personalApiKey) {
-    console.error("✗ PH_PERSONAL_API_KEY is missing — a phx_ personal API key with admin + file_system scope.");
+    console.error("✗ PH_PERSONAL_API_KEY is missing — a phx_ personal API key with admin scope.");
     ok = false;
   } else if (!env.personalApiKey.startsWith("phx_")) {
-    console.error("✗ PH_PERSONAL_API_KEY should start with phx_ (got the first 8 chars: " + env.personalApiKey.slice(0, 8) + "...).");
+    console.error("✗ PH_PERSONAL_API_KEY should start with phx_ (got: " + env.personalApiKey.slice(0, 8) + "...).");
   }
 
   if (!env.host) {
@@ -185,86 +184,10 @@ async function preflight(env: Env): Promise<boolean> {
     console.log("✓ Personal API key can access project " + env.projectId + ".");
   } catch {
     console.error("✗ Personal API key has NO access to project " + env.projectId + ".");
-    console.error("  (The key must belong to a user in that project/org. If you just created a new dev project, use a key from that project's org.)");
-    ok = false;
-  }
-
-  // 3. file_system:read scope (folders).
-  try {
-    await api(env, "GET", "/api/projects/" + env.projectId + "/file_system/");
-    console.log("✓ file_system:read scope present (can list folders).");
-  } catch {
-    console.error("✗ file_system:read scope MISSING — this key cannot manage folders.");
-    console.error("  Grant the key (or its user) the 'file_system' scope in PostHog → Personal API keys / project settings.");
     ok = false;
   }
 
   return ok;
-}
-
-// ---------------------------------------------------------------------------
-// Provisioning: folders
-// ---------------------------------------------------------------------------
-
-interface FileSystemEntry {
-  id: string;
-  type: string;
-  path?: string;
-  name?: string;
-  ref?: string;
-  [k: string]: unknown;
-}
-
-async function ensureFolder(
-  env: Env,
-  parentFsId: string | null,
-  name: string,
-  expectedPath: string
-): Promise<FileSystemEntry> {
-  const base = "/api/projects/" + env.projectId + "/file_system/";
-  const existing = await api<{ results?: FileSystemEntry[] }>(env, "GET", base);
-  const list = existing.results ?? [];
-
-  const match = list.find(
-    (e) =>
-      e.type === "folder" &&
-      (e.name === name || e.path === expectedPath || e.path === expectedPath.replace(/\/$/, ""))
-  );
-  if (match) {
-    console.log("✓ folder exists: " + expectedPath + "  (" + match.id + ")");
-    return match;
-  }
-
-  const created = await api<FileSystemEntry>(env, "POST", base, {
-    path: expectedPath,
-    type: "folder",
-  });
-  console.log("+ created folder: " + expectedPath + "  (" + created.id + ")");
-  return created;
-}
-
-async function moveDashboard(env: Env, dashboardId: string, newPath: string): Promise<void> {
-  const base = "/api/projects/" + env.projectId + "/file_system/";
-  const existing = await api<{ results?: FileSystemEntry[] }>(env, "GET", base);
-  const list = existing.results ?? [];
-
-  // Dashboard file-system entries carry `type: "dashboard"`, `id` = the fs
-  // entry uuid, and `ref` = the numeric dashboard id.
-  const entry = list.find((e) => e.type === "dashboard" && String(e.ref) === String(dashboardId));
-
-  if (entry && entry.path === newPath) {
-    console.log("  dashboard already in folder: " + newPath);
-    return;
-  }
-
-  if (entry && entry.id) {
-    await api(env, "POST", `/api/projects/${env.projectId}/file_system/${entry.id}/move/`, {
-      new_path: newPath,
-    });
-    console.log("  moved dashboard " + dashboardId + " → " + newPath);
-  } else {
-    console.log("  (could not locate dashboard " + dashboardId + " in file system; leaving in place)");
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -365,10 +288,11 @@ async function ensureInsight(env: Env, spec: InsightSpec, dashboardId: number): 
 }
 
 // ---------------------------------------------------------------------------
-// Insight query builders (TrendsQuery — the supported InsightVizNode format)
+// Insight query builders (query format — the supported InsightVizNode shapes)
 // ---------------------------------------------------------------------------
 
-function trends(series: unknown[], opts: { interval?: string } = {}): unknown {
+/** TrendsQuery — a line/bar/table of one or more event series. */
+function trends(series: unknown[], opts: { interval?: string; breakdown?: string; breakdownLimit?: number } = {}): unknown {
   return {
     kind: "InsightVizNode",
     source: {
@@ -376,6 +300,62 @@ function trends(series: unknown[], opts: { interval?: string } = {}): unknown {
       series,
       interval: opts.interval ?? "day",
       dateRange: { date_to: null },
+      ...(opts.breakdown
+        ? { breakdownFilter: { breakdown_type: "event", breakdown: opts.breakdown, breakdown_limit: opts.breakdownLimit ?? 20 } }
+        : {}),
+    },
+  };
+}
+
+/** FunnelsQuery — an ordered sequence of conversion steps (default 14-day window). */
+function funnel(
+  steps: Array<string | { event: string; properties?: unknown[] }>,
+  opts: { window?: number; windowUnit?: string; order?: string; breakdown?: string; breakdownLimit?: number } = {}
+): unknown {
+  return {
+    kind: "InsightVizNode",
+    source: {
+      kind: "FunnelsQuery",
+      series: steps.map((s) =>
+        typeof s === "string"
+          ? { kind: "EventsNode", event: s }
+          : { kind: "EventsNode", event: s.event, ...(s.properties ? { properties: s.properties } : {}) }
+      ),
+      dateRange: { date_to: null },
+      funnelsFilter: {
+        funnelOrderType: opts.order ?? "ordered",
+        funnelVizType: "steps",
+        funnelWindowInterval: opts.window ?? 14,
+        funnelWindowIntervalUnit: opts.windowUnit ?? "day",
+      },
+      ...(opts.breakdown
+        ? { breakdownFilter: { breakdown_type: "event", breakdown: opts.breakdown, breakdown_limit: opts.breakdownLimit ?? 20 } }
+        : {}),
+    },
+  };
+}
+
+/** RetentionQuery — how often users come back after their first qualifying event. */
+function retention(
+  event: string,
+  opts: { returning?: string; period?: string; intervals?: number; type?: string; reference?: string } = {}
+): unknown {
+  const entity = (name: string) => ({ id: name, name, type: "events" });
+  const returning = opts.returning ?? event;
+  return {
+    kind: "InsightVizNode",
+    source: {
+      kind: "RetentionQuery",
+      retentionFilter: {
+        period: opts.period ?? "Week",
+        totalIntervals: opts.intervals ?? 8,
+        targetEntity: entity(event),
+        returningEntity: entity(returning),
+        retentionType: opts.type ?? "retention_first_time",
+        retentionReference: opts.reference ?? "total",
+        cumulative: false,
+      },
+      dateRange: { date_from: "-60d" },
     },
   };
 }
@@ -386,6 +366,13 @@ const ev = (event: string, extra: Record<string, unknown> = {}): unknown => ({
   ...extra,
 });
 
+const prop = (key: string, value: unknown, operator = "exact") => ({
+  key,
+  operator,
+  type: "event" as const,
+  value: Array.isArray(value) ? value : [value],
+});
+
 // ---------------------------------------------------------------------------
 // Structure definition
 // ---------------------------------------------------------------------------
@@ -393,51 +380,127 @@ const ev = (event: string, extra: Record<string, unknown> = {}): unknown => ({
 interface DashboardSpec {
   name: string;
   description: string;
-  folderPath: string;
   insights: InsightSpec[];
 }
 
+const REGISTRATION_FUNNEL: Array<string | { event: string; properties?: unknown[] }> = [
+  "landing_page_viewed",
+  "registration_cta_clicked",
+  "registration_form_continue",
+  "registration_form_submit_success",
+  "confirmation_page_viewed",
+];
+
 const DASHBOARDS: DashboardSpec[] = [
   {
-    name: "Client · Browser Analytics",
-    description: "Client-side browser analytics for the dev team (pageviews, web vitals).",
-    folderPath: "Unfiled/Dev Team/Client · Browser Analytics",
+    name: "Overview",
+    description: "High-level site and product health: visitors, pageviews, performance and content creation.",
     insights: [
+      { name: "Unique visitors (DAU)", query: trends([ev("$pageview", { math: "dau" })]) },
+      { name: "Weekly active users (WAU)", query: trends([ev("$pageview", { math: "weekly_active" })]) },
+      { name: "Monthly active users (MAU)", query: trends([ev("$pageview", { math: "monthly_active" })]) },
+      { name: "Pageviews", query: trends([ev("$pageview", { math: "total" })]) },
+      { name: "Web vitals", query: trends([ev("$web_vitals", { math: "total" })]) },
+      { name: "Pageviews by page type", query: trends([ev("$pageview")], { breakdown: "page_type" }) },
+      { name: "Top pages", query: trends([ev("$pageview")], { breakdown: "path", breakdownLimit: 20 }) },
+      { name: "Post creation rate", query: trends([ev("post_created", { math: "total" })]) },
+      { name: "New visitors (first time)", query: trends([ev("$pageview", { math: "first_time_for_user" })]) },
+    ],
+  },
+  {
+    name: "Onboarding & Conversion",
+    description: "Funnels across the visitor → registration journey and content activation.",
+    insights: [
+      { name: "Registration funnel", query: funnel(REGISTRATION_FUNNEL) },
+      { name: "Landing engagement", query: funnel(["$pageview", "scroll_depth_50", "registration_cta_clicked"]) },
       {
-        name: "Pageviews (browser) — Client",
-        query: trends([
-          ev("$pageview", { math: "total" }),
-        ]),
+        name: "CTA performance by section",
+        query: funnel(["registration_cta_clicked", "registration_form_submit_success"], { breakdown: "cta_location" }),
       },
       {
-        name: "Web vitals — Client",
-        query: trends([
-          ev("$web_vitals", { math: "total" }),
-        ]),
+        name: "Quiz & registration journey",
+        query: funnel(["landing_page_viewed", "questions_page_viewed", "score_result_viewed", "registration_form_submit_success"]),
+      },
+      { name: "Visitor to subscriber", query: funnel(["$pageview", "push_subscription_enabled"], { window: 30 }) },
+      { name: "Visitor to creator", query: funnel(["$pageview", "post_created"], { window: 30 }) },
+      { name: "Post to engagement", query: funnel(["post_created", "post_viewed", "post_reacted"], { window: 7 }) },
+    ],
+  },
+  {
+    name: "Content Engagement",
+    description: "What content performs best — posts, stories, reactions and formats.",
+    insights: [
+      { name: "Posts by type", query: trends([ev("post_created")], { breakdown: "post_type" }) },
+      { name: "Post views over time", query: trends([ev("post_viewed", { math: "total" })]) },
+      { name: "Reactions per post", query: trends([ev("post_reacted")], { breakdown: "emoji" }) },
+      { name: "Most reacted posts", query: trends([ev("post_reacted")], { breakdown: "post_id", breakdownLimit: 20 }) },
+      { name: "Media vs text-only posts", query: trends([ev("post_created")], { breakdown: "has_media" }) },
+      {
+        name: "Story engagement",
+        query: trends([ev("story_viewed", { math: "total" }), ev("story_liked", { math: "total" })]),
       },
     ],
   },
   {
-    name: "Dev Ops · MCP · Server",
-    description: "Server-side, MCP and dev-ops telemetry for the dev team.",
-    folderPath: "Unfiled/Dev Team/Dev Ops · MCP · Server",
+    name: "User Growth",
+    description: "New and returning users, weekly retention and push opt-in.",
+    insights: [
+      { name: "New visitors (first time)", query: trends([ev("$pageview", { math: "first_time_for_user" })]) },
+      { name: "Weekly retention", query: retention("$pageview", { period: "Week", intervals: 8 }) },
+      {
+        name: "Push opt-ins vs opt-outs",
+        query: trends([ev("push_subscription_enabled", { math: "total" }), ev("push_subscription_disabled", { math: "total" })]),
+      },
+    ],
+  },
+  {
+    name: "Push Notifications",
+    description: "Push subscription and delivery health.",
     insights: [
       {
-        name: "MCP tool calls — Dev",
-        query: trends([ev("mcp_tool_called", { math: "total" })]),
+        name: "Push subscriptions over time",
+        query: trends([ev("push_subscription_enabled", { math: "total" }), ev("push_subscription_disabled", { math: "total" })]),
       },
+      { name: "Push send volume", query: trends([ev("push_notifications_sent", { math: "total" })]) },
       {
-        name: "MCP server initializations — Dev",
-        query: trends([ev("mcp_session_created", { math: "total" })]),
+        name: "Push sends vs skipped",
+        query: trends([ev("push_notifications_sent", { math: "total" }), ev("push_notifications_skipped", { math: "total" })]),
       },
+      { name: "Push subscription failures", query: trends([ev("push_subscription_failed", { math: "total" })]) },
+    ],
+  },
+  {
+    name: "LLM & AI Visibility",
+    description: "How AI agents and LLM crawlers discover and use the platform.",
+    insights: [
+      { name: "LLM asset requests", query: trends([ev("llm_asset_requested")], { breakdown: "asset" }) },
+      { name: "LLM vs human traffic", query: trends([ev("$pageview")], { breakdown: "page_type" }) },
       {
-        name: "LLM assets requested — Dev",
-        query: trends([ev("llm_asset_requested", { math: "total" })]),
+        name: "OpenAPI spec downloads",
+        query: trends([ev("$pageview", { properties: [prop("path", "/openapi.json")] })]),
       },
-      {
-        name: "Server key probe — Dev",
-        query: trends([ev("server_key_probe", { math: "total" })]),
-      },
+      { name: "MCP discovery (sessions by auth)", query: trends([ev("mcp_session_created")], { breakdown: "authenticated" }) },
+    ],
+  },
+  {
+    name: "MCP Usage",
+    description: "Model Context Protocol server and tool usage.",
+    insights: [
+      { name: "MCP sessions created", query: trends([ev("mcp_session_created", { math: "total" })]) },
+      { name: "MCP tool calls", query: trends([ev("mcp_tool_called", { math: "total" })]) },
+      { name: "Most used MCP tools", query: trends([ev("mcp_tool_called")], { breakdown: "tool", breakdownLimit: 20 }) },
+      { name: "MCP auth vs anonymous", query: trends([ev("mcp_tool_called")], { breakdown: "authenticated" }) },
+      { name: "MCP tool errors", query: trends([ev("mcp_tool_called")], { breakdown: "isError" }) },
+      { name: "Server key probes", query: trends([ev("server_key_probe", { math: "total" })]) },
+    ],
+  },
+  {
+    name: "Reliability",
+    description: "Web vitals and client / server errors.",
+    insights: [
+      { name: "Web vitals", query: trends([ev("$web_vitals", { math: "total" })]) },
+      { name: "Uncaught exceptions", query: trends([ev("$exception", { math: "total" })]) },
+      { name: "Client errors", query: trends([ev("client_error", { math: "total" })]) },
     ],
   },
 ];
@@ -449,7 +512,7 @@ const DASHBOARDS: DashboardSpec[] = [
 async function main() {
   const env = loadEnv();
 
-  console.log("PostHog dev-team bootstrap");
+  console.log("PostHog analytics bootstrap");
   console.log("---------------------------");
 
   if (!validateEnv(env)) {
@@ -465,27 +528,10 @@ async function main() {
   }
 
   console.log("\nProvisioning …\n");
-
-  // Folders
-  const rootPath = "Unfiled/Dev Team";
-  const root = await ensureFolder(env, null, "Dev Team", rootPath);
-  const clientFolder = await ensureFolder(env, root.id, "Client · Browser Analytics", rootPath + "/Client · Browser Analytics");
-  const devFolder = await ensureFolder(env, root.id, "Dev Ops · MCP · Server", rootPath + "/Dev Ops · MCP · Server");
-
-  const folderByDashboard: Record<string, { id: string; path: string }> = {
-    "Client · Browser Analytics": { id: clientFolder.id, path: clientFolder.path ?? (rootPath + "/Client · Browser Analytics") },
-    "Dev Ops · MCP · Server": { id: devFolder.id, path: devFolder.path ?? (rootPath + "/Dev Ops · MCP · Server") },
-  };
-
-  console.log("\nDashboards & insights\n");
+  console.log("Dashboards & insights\n");
 
   for (const spec of DASHBOARDS) {
     const dashboard = await ensureDashboard(env, spec.name, spec.description);
-
-    const folder = folderByDashboard[spec.name];
-    if (folder) {
-      await moveDashboard(env, String(dashboard.id), folder.path);
-    }
 
     for (const insight of spec.insights) {
       await ensureInsight(env, insight, dashboard.id);

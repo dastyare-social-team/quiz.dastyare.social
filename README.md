@@ -79,12 +79,14 @@ Routes: `/score/v1`, `/score/v2`
   shared client, so `$feature_flag_called` also reaches both. Set
   `DISABLE_DEV_TEAM_PH=true` to disable the relay fan-out (direct captures still
   work).
-- **Dev-team bootstrap** — `scripts/posthog-bootstrap.ts` (run via
-  `bun run bootstrap:posthog`) provisions the dev-team PostHog folder tree,
-  dashboards and insights via the admin REST API, is idempotent, and needs
-  `PH_PERSONAL_API_KEY` (`phx_`, `file_system` scope), optional `PH_PROJECT_ID`
-  (auto-discovered from the key's `@current` project), and `PH_HOST`. See
-  `.env.example` for placeholders.
+- **PostHog bootstrap** — `scripts/posthog-bootstrap.ts` (run via
+  `bun run bootstrap:posthog`) provisions the standard, audience-neutral dashboard
+  suite (8 dashboards: Overview, Onboarding & Conversion, Content Engagement,
+  User Growth, Push Notifications, LLM & AI Visibility, MCP Usage, Reliability —
+  ~40 insights) via the admin REST API, identically on every account. It is
+  idempotent and needs `PH_PERSONAL_API_KEY` (`phx_`, admin scope), optional
+  `PH_PROJECT_ID` (auto-discovered from the key's `@current` project), and
+  `PH_HOST`. See `.env.example` for placeholders.
 
 ## Data products (session replay, error tracking, heatmaps)
 

@@ -8,22 +8,24 @@ Everything that has been set up / done on this project so far:
 
 - **Pages** — A/B landing (`/v1`, `/v2`), questions (`/questions/v1`, `/questions/v2`), score result (`/score/v1`, `/score/v2`). A server-side `/` redirect picks a landing variant based on the PostHog flag `home-page-variant` (cookie `home_ab_variant`, fallback `/v1`).
 - **PostHog analytics** — consent-gated (`posthog_consent` cookie), session replay with full text/attribute masking, scroll depth, button/link/outbound-click tracking, plus the quiz + registration funnel events. (This project has **no** dedicated `POSTHOG.md`; the shared event/tracking setup mirrors the workshop and magnet sites.)
-- **PostHog dashboard** — a project dashboard (see below) hosting the funnel insights plus a weekly email subscription. Shares the same PostHog project as the workshop/magnet sites; its insights are isolated by filtering on `$host`.
+- **PostHog dashboards** — the standard audience-neutral PostHog suite (8 dashboards, ~40 insights — see the [bootstrap section](#dev-team-relay--bootstrap)) is provisioned identically on both PostHog accounts. Shares the same PostHog project as the workshop/magnet sites; quiz/registration funnels are part of the suite.
 - **Shared A/B experiment** — reuses `Home page A/B test` (PostHog experiment, flag `home-page-variant`, variants `v1`/`v2`, 50/50, 100% rollout) shared with the workshop and magnet sites.
 
-### PostHog dashboard (as configured)
+### PostHog dashboards (as provisioned)
 
-A PostHog dashboard named after this project hosts three funnel insights (14-day window), all filed under their own dashboard folder. All three insights are filtered to this site's host:
+The standard suite's **Onboarding & Conversion** dashboard hosts the funnels relevant to this project (14-day window by default). All three insights below are part of the provisioned suite:
 
 | Insight | Type | Steps |
 | --- | --- | --- |
-| Registration funnel | Funnel (14-day), host-filtered | `landing_page_viewed` → `registration_cta_clicked` → `registration_form_continue` → `registration_form_submit_success` → `confirmation_page_viewed` |
-| Quiz & registration journey | Funnel (14-day), host-filtered | `landing_page_viewed` → `questions_page_viewed` → `score_result_viewed` → `registration_form_submit_success` |
-| CTA performance by section | Funnel (14-day), host-filtered, broken down by `cta_location` | `registration_cta_clicked` → `registration_form_submit_success` |
+| Registration funnel | Funnel (14-day) | `landing_page_viewed` → `registration_cta_clicked` → `registration_form_continue` → `registration_form_submit_success` → `confirmation_page_viewed` |
+| Quiz & registration journey | Funnel (14-day) | `landing_page_viewed` → `questions_page_viewed` → `score_result_viewed` → `registration_form_submit_success` |
+| CTA performance by section | Funnel (14-day), broken down by `cta_location` | `registration_cta_clicked` → `registration_form_submit_success` |
 
-A weekly email subscription exports all three insights every Monday (AI summary emphasising the quiz-completion → registration conversion and where users drop off across landing → questions → score → registration).
+If site-specific isolation is needed, add a `$host` filter to these insights (the suite itself is deliberately not host-scoped).
 
-> **Note on folders:** folders in PostHog can only be created/moved via the browser UI — no API key type (personal or project) has `file_system:write` scope, and the dashboard serializer has no writable `folder` field. This was confirmed against the OpenAPI spec; objects (dashboards/insights/funnels) are created via API, folders are organised in the UI.
+> **Provisioning:** these dashboards/insights are provisioned by the standard
+> suite in `scripts/posthog-bootstrap.ts` (see the [Dev-team relay & bootstrap](#dev-team-relay--bootstrap)
+> section) — no folders are used, so provisioning is fully API-driven.
 
 ## Landing
 Routes: `/v1`, `/v2`

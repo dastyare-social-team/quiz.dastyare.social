@@ -9,23 +9,11 @@ const posthogKey =
 const posthogHost =
   process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() || "https://us.i.posthog.com";
 
-// Optional secondary instance routed to the Dastyare Social ORG PostHog project.
-// Set NEXT_PUBLIC_POSTHOG_ORG_PROJECT_TOKEN to record every
-// visitor to BOTH the primary project (omidshabab.com) and the ORG project.
-const posthogOrgKey = process.env.NEXT_PUBLIC_POSTHOG_ORG_PROJECT_TOKEN?.trim();
-const posthogOrgHost =
-  process.env.NEXT_PUBLIC_POSTHOG_ORG_HOST?.trim() || "https://us.i.posthog.com";
-
 const isPostHogEnabled = Boolean(posthogKey);
-const isOrgEnabled = Boolean(posthogOrgKey);
-
-const ORG_INSTANCE = "dastyare_org";
 
 export type PostHogConsent = "granted" | "denied";
 
 let initialized = false;
-let initializedOrg = false;
-let orgClient: PostHog | null = null;
 
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") {
@@ -73,9 +61,6 @@ function forEachClient(fn: (client: PostHog) => void) {
   }
   if (isPostHogEnabled) {
     fn(posthog);
-  }
-  if (isOrgEnabled && orgClient) {
-    fn(orgClient);
   }
 }
 
@@ -138,25 +123,6 @@ export function initPostHog() {
 
     applyState(posthog);
     initialized = true;
-  }
-
-  if (isOrgEnabled && !initializedOrg) {
-    const key = posthogOrgKey;
-    if (key) {
-      orgClient = posthog.init(key, {
-        api_host: posthogOrgHost,
-        capture_pageview: false,
-        capture_pageleave: true,
-        mask_all_text: true,
-        mask_all_element_attributes: true,
-        opt_out_capturing_by_default: true,
-        capture_exceptions: true,
-        capture_heatmaps: true,
-        debug: process.env.NODE_ENV === "development",
-      }, ORG_INSTANCE);
-      applyState(orgClient);
-      initializedOrg = true;
-    }
   }
 }
 

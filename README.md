@@ -84,38 +84,29 @@ Routes: `/score/v1`, `/score/v2`
 
 ## Dev-team relay & bootstrap
 
-- **Dev-team relay** — server-side events are optionally fanned out to a second,
-  dev-team PostHog project through the Cloudflare proxy (`ingest.dastyare.social`).
-  `src/lib/analytics/devrel.ts` holds the obfuscated proxy URL/token (the project
-  key is never stored here), and `src/lib/analytics/server.ts` exposes a
-  `RelayPostHog` whose `capture` sends each event to both the direct client/founder
-  project (103916) and the dev-team relay. `src/lib/posthog-server.ts` uses this
-  shared client, so `$feature_flag_called` also reaches both. Set
-  `DISABLE_DEV_TEAM_PH=true` to disable the relay fan-out (direct captures still
-  work).
+- **Dev-team relay** — server-side events are relayed through the Cloudflare
+  proxy (`ingest.dastyare.social`) by default. `src/lib/analytics/devrel.ts`
+  holds the obfuscated proxy URL/token (the project key is never stored here),
+  and `src/lib/analytics/server.ts` exposes a `RelayPostHog` whose `capture`
+  sends each event to the Dastyare Social ORG project (581705) and, by default,
+  also to the dev-team relay. `src/lib/posthog-server.ts` uses this shared
+  client, so `$feature_flag_called` events are included too. Set
+  `DISABLE_DEV_TEAM_PH=false` to stop sending through the proxy (direct captures
+  still work).
 - **PostHog bootstrap** — `scripts/posthog-bootstrap.ts` (run via
   `bun run bootstrap:posthog`) provisions this project's suite (3 dashboards:
   Overview, Conversion, Reliability — with the quiz & registration journey)
   via the admin REST API, using only events this app captures. It is idempotent
   and needs `PH_PERSONAL_API_KEY` (`phx_`, admin scope), optional
   `PH_PROJECT_ID` (auto-discovered from the key's `@current` project), and
-  `PH_HOST`. Set `PH_DASHBOARD_LABEL` to suffix every dashboard/insight with
-  ` — {label}` (e.g. `Overview — Score Card`) so per-product suites coexist in
-  one account. Transient 429/5xx responses are retried with backoff. See
+  `PH_HOST`. Transient 429/5xx responses are retried with backoff. See
   `.env.example` for placeholders.
 
 ## Data products (session replay, error tracking, heatmaps)
 
-The PostHog data products are enabled on **both** projects:
-
-| Project | ID | Role | Replay | Error tracking | Heatmaps |
-| --- | --- | --- | --- | --- | --- |
-| `omidshabab.com` (client / founder) | 103916 | Landing-repo client events land here | On | On | On (client) |
-| `Dastyare Social — ORG` (dev team) | 581705 | Server relay fan-out destination | On | On | n/a (server-only) |
-
-### Client project — 103916
-
-Server flags (verified live via `project-get`):
+Both the browser (posthog-js) and the server (posthog-node) now point at the
+single **Dastyare Social — ORG** project (581705). The data products are
+enabled on it (verified via `project-get`):
 
 - `session_recording_opt_in: true` — **session replay** enabled.
 - `autocapture_exceptions_opt_in: true` — **error tracking** enabled (uncaught
@@ -138,15 +129,3 @@ posthog.startSessionRecording();
 and heatmap data appear once the deploy ships **and** a visitor accepts the
 consent banner (`opt_out_capturing_by_default` is on by design, so only consented
 visitors contribute).
-
-### Dev-team project — 581705
-
-Enabled (verified live via the project REST API with a `phx_` personal key that
-has membership in 581705):
-
-- `session_recording_opt_in: true`
-- `autocapture_exceptions_opt_in: true`
-
-Note: 581705 receives **server-only** relay events (no browser SDK points at it),
-so replay and heatmaps are limited there by design; **error tracking works** —
-server `$exception` events from the relay arrive in this project.

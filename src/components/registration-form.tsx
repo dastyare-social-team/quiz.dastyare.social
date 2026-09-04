@@ -9,7 +9,11 @@ import { cn } from "@/lib/utils";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, type KeyboardEvent } from "react";
 
-const WEBHOOK_URL = process.env.NEXT_PUBLIC_REGISTRATION_WEBHOOK_URL?.trim();
+const WEBHOOK_URLS: Record<string, string> = {
+  leadMagnet: process.env.NEXT_PUBLIC_LEAD_MAGNET_WEBHOOK_URL?.trim() || "",
+  scorecard: process.env.NEXT_PUBLIC_SCORECARD_WEBHOOK_URL?.trim() || "",
+  workshop: process.env.NEXT_PUBLIC_WORKSHOP_WEBHOOK_URL?.trim() || "",
+};
 
 const sanitizeText = (value: string) =>
   value
@@ -182,9 +186,10 @@ const RegistrationForm = ({
       return;
     }
 
-    if (!WEBHOOK_URL) {
-      capture("registration_form_webhook_missing");
-      setError("The registration webhook URL is not configured.");
+    const webhookUrl = WEBHOOK_URLS[formType];
+    if (!webhookUrl) {
+      capture("registration_form_webhook_missing", { formType });
+      setError(`The registration webhook URL is not configured for "${formType}".`);
       return;
     }
 
@@ -200,10 +205,10 @@ const RegistrationForm = ({
         last_name: nameValidation.last_name,
         email: emailValidation.sanitized,
         phone: phoneValidation.sanitized,
-        source: "scorecard",
+        source: formType,
       };
 
-      const requestUrl = new URL(WEBHOOK_URL);
+      const requestUrl = new URL(webhookUrl);
       Object.entries(payload).forEach(([key, value]) => {
         if (value) {
           requestUrl.searchParams.set(key, value);

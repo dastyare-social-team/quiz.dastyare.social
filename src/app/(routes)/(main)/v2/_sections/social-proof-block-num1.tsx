@@ -19,7 +19,13 @@ const LandingSocialProofBlockNum1SectionV2 = () => {
           &nbsp; not just more views
         </div>
 
-         <RegistrationForm primary_cta="Save My Seat — Now" cta_location="social-proof" />
+         <RegistrationForm
+            primary_cta="Save My Seat — Now"
+            cta_location="social-proof"
+            leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
+            scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
+            workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          />
       </div>
     </SectionWrapper>
   );

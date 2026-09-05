@@ -9,12 +9,6 @@ import { cn } from "@/lib/utils";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, type KeyboardEvent } from "react";
 
-const WEBHOOK_URLS: Record<string, string> = {
-  leadMagnet: process.env.NEXT_PUBLIC_LEAD_MAGNET_WEBHOOK_URL?.trim() || "",
-  scorecard: process.env.NEXT_PUBLIC_SCORECARD_WEBHOOK_URL?.trim() || "",
-  workshop: process.env.NEXT_PUBLIC_WORKSHOP_WEBHOOK_URL?.trim() || "",
-};
-
 const sanitizeText = (value: string) =>
   value
     .replace(/[\u0000-\u001F\u007F]/g, " ")
@@ -102,9 +96,15 @@ const validatePhone = (
 const RegistrationForm = ({
   primary_cta,
   cta_location = "unknown",
+  leadMagnetWebhookUrl,
+  scorecardWebhookUrl,
+  workshopWebhookUrl,
 }: {
   primary_cta: string;
   cta_location?: string;
+  leadMagnetWebhookUrl: string;
+  scorecardWebhookUrl: string;
+  workshopWebhookUrl: string;
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -116,6 +116,17 @@ const RegistrationForm = ({
   const [error, setError] = useState<string | null>(null);
 
   const routeVariant = pathname?.includes("/v2") ? "v2" : "v1";
+
+  const formType =
+    cta_location === "meet-the-host" || primary_cta.toLowerCase().includes("save my seat")
+      ? "workshop"
+      : "scorecard";
+
+  const WEBHOOK_URLS: Record<string, string> = {
+    leadMagnet: leadMagnetWebhookUrl?.trim() || "",
+    scorecard: scorecardWebhookUrl?.trim() || "",
+    workshop: workshopWebhookUrl?.trim() || "",
+  };
 
   const handleContinue = () => {
     const nameValidation = validateName(name);

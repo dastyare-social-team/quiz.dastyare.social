@@ -28,7 +28,13 @@ const LandingProblemSectionV1 = () => {
           </p>
         </div>
 
-         <RegistrationForm primary_cta="Get Your Score — Now" cta_location="problem" />
+         <RegistrationForm
+          primary_cta="Get Your Score — Now"
+          cta_location="problem"
+          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
+          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
+          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+        />
       </div>
 
       <div

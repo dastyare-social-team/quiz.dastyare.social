@@ -117,7 +117,13 @@ const LandingWhyThisScorecardIsDifferentSectionV1 = async () => {
           <p>Not Another Vanity "Brand Audit"</p>
         </div>
 
-         <RegistrationForm primary_cta="Get Your Score — Now" cta_location="why-different" />
+         <RegistrationForm
+          primary_cta="Get Your Score — Now"
+          cta_location="why-different"
+          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
+          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
+          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+        />
 
         {/* —— Comparison Table —— */}
         <Table className="w-full max-w-5xl overflow-x-scroll select-none">

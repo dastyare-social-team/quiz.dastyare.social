@@ -20,7 +20,13 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = () => {
             </p>
           </div>
 
-           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="three-dream-outcome" />
+           <RegistrationForm
+              primary_cta="Get Your Score — Now"
+              cta_location="three-dream-outcome"
+              leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
+              scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
+              workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+            />
         </div>
 
         <div
@@ -50,7 +56,13 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = () => {
             </p>
           </div>
 
-           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="three-dream-outcome" />
+           <RegistrationForm
+              primary_cta="Get Your Score — Now"
+              cta_location="three-dream-outcome"
+              leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
+              scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
+              workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+            />
         </div>
 
         <div
@@ -79,7 +91,13 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = () => {
             </p>
           </div>
 
-           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="three-dream-outcome" />
+           <RegistrationForm
+              primary_cta="Get Your Score — Now"
+              cta_location="three-dream-outcome"
+              leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
+              scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
+              workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+            />
         </div>
 
         <div

@@ -38,7 +38,13 @@ const LandingHeroSectionV1 = () => {
         </div>
 
         <div className="flex flex-col gap-y-2.5">
-           <RegistrationForm primary_cta="Get Your Score — Now" cta_location="hero" />
+           <RegistrationForm
+          primary_cta="Get Your Score — Now"
+          cta_location="hero"
+          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
+          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
+          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+        />
 
           <div className="text-[18px] opacity-80 leading-6.5">
             under 5 minutes, quick start, straight into your assessment

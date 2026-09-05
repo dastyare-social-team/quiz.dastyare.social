@@ -3,7 +3,15 @@
 import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 
-const LandingSocialProofBlockNum1SectionV1 = () => {
+const LandingSocialProofBlockNum1SectionV1 = ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   return (
     <SectionWrapper className="justify-center items-center md:pt-10 md:pb-10">
       <div className="flex flex-col gap-y-8 max-w-md items-center">
@@ -22,9 +30,9 @@ const LandingSocialProofBlockNum1SectionV1 = () => {
          <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="social-proof"
-          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
         />
       </div>
     </SectionWrapper>

@@ -4,7 +4,15 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 import Image from "next/image";
 
-const LandingMeetTheHostSectionV2 = () => {
+const LandingMeetTheHostSectionV2 = ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   return (
     <SectionWrapper>
       <div className="max-w-xl pt-5 flex flex-col gap-y-2.5">
@@ -25,9 +33,9 @@ const LandingMeetTheHostSectionV2 = () => {
            <RegistrationForm
               primary_cta="Get Your Score — Now"
               cta_location="meet-the-host"
-              leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-              scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-              workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
             />
         </div>
       </div>

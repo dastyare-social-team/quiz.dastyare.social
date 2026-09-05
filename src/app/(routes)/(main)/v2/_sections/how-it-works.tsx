@@ -4,7 +4,15 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 import { FootprintsIcon } from "lucide-react";
 
-const LandingHowItWorksSectionV2 = () => {
+const LandingHowItWorksSectionV2 = ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   return (
     <SectionWrapper className="justify-center items-center">
       <div className="flex flex-col gap-y-8 items-center">
@@ -18,9 +26,9 @@ const LandingHowItWorksSectionV2 = () => {
          <RegistrationForm
             primary_cta="Get Your Score — Now"
             cta_location="how-it-works"
-            leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-            scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-            workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
           />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-5 mt-5">

@@ -4,7 +4,15 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 import Image from "next/image";
 
-const LandingProblemSectionV1 = () => {
+const LandingProblemSectionV1 = ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   return (
     <SectionWrapper>
       <div className="flex flex-col flex-1 gap-y-8">
@@ -31,9 +39,9 @@ const LandingProblemSectionV1 = () => {
          <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="problem"
-          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
         />
       </div>
 

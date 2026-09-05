@@ -10,7 +10,15 @@ const value_props = [
   "a ranked list of what to fix first",
 ];
 
-const LandingFinalCTASectionV2 = () => {
+const LandingFinalCTASectionV2 = ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   return (
     <SectionWrapper>
       <div className="max-w-xl pt-5 flex flex-col gap-y-2.5">
@@ -33,9 +41,9 @@ const LandingFinalCTASectionV2 = () => {
            <RegistrationForm
               primary_cta="Get Your Score — Now"
               cta_location="final-cta"
-              leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-              scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-              workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
             />
         </div>
       </div>

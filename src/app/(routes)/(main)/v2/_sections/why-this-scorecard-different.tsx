@@ -3,7 +3,15 @@ import { getTranslations } from "next-intl/server";
 import { CrownIcon } from "lucide-react";
 import RegistrationForm from "@/components/registration-form";
 
-const LandingWhyThisScorecardIsDifferentSectionV2 = async () => {
+const LandingWhyThisScorecardIsDifferentSectionV2 = async ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   const t = await getTranslations("why_this_scorecard_different");
 
   return (
@@ -96,9 +104,9 @@ const LandingWhyThisScorecardIsDifferentSectionV2 = async () => {
          <RegistrationForm
             primary_cta="Get Your Score — Now"
             cta_location="why-different"
-            leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-            scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-            workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
           />
       </div>
     </SectionWrapper>

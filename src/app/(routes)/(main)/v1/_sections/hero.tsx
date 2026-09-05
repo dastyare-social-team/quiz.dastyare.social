@@ -10,7 +10,15 @@ const value_props = [
   "get a specific, ranked list of what to fix first",
 ];
 
-const LandingHeroSectionV1 = () => {
+const LandingHeroSectionV1 = ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   return (
     <SectionWrapper className="md:pt-0 border-0">
       <div className="flex flex-col flex-1 gap-y-8">
@@ -41,9 +49,9 @@ const LandingHeroSectionV1 = () => {
            <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="hero"
-          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
         />
 
           <div className="text-[18px] opacity-80 leading-6.5">

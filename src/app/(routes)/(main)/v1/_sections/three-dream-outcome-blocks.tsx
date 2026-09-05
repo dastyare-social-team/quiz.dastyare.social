@@ -4,7 +4,15 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 import Image from "next/image";
 
-const LandingThreeDreamOutcomeBlocksSectionV1 = () => {
+const LandingThreeDreamOutcomeBlocksSectionV1 = ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   return (
     <>
       <SectionWrapper className="md:flex-row-reverse">
@@ -23,9 +31,9 @@ const LandingThreeDreamOutcomeBlocksSectionV1 = () => {
            <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="three-dream-outcome"
-          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
         />
         </div>
 
@@ -59,9 +67,9 @@ const LandingThreeDreamOutcomeBlocksSectionV1 = () => {
            <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="three-dream-outcome"
-          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
         />
         </div>
 
@@ -94,9 +102,9 @@ const LandingThreeDreamOutcomeBlocksSectionV1 = () => {
            <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="three-dream-outcome"
-          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
         />
         </div>
 

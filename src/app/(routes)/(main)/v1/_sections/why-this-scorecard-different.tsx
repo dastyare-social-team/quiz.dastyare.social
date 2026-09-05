@@ -103,7 +103,15 @@ const tableData = [
   },
 ];
 
-const LandingWhyThisScorecardIsDifferentSectionV1 = async () => {
+const LandingWhyThisScorecardIsDifferentSectionV1 = async ({
+  leadMagnetWebhookUrl = "",
+  scorecardWebhookUrl = "",
+  workshopWebhookUrl = "",
+}: {
+  leadMagnetWebhookUrl?: string;
+  scorecardWebhookUrl?: string;
+  workshopWebhookUrl?: string;
+}) => {
   const t = await getTranslations("why_this_scorecard_different");
 
   return (
@@ -120,9 +128,9 @@ const LandingWhyThisScorecardIsDifferentSectionV1 = async () => {
          <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="why-different"
-          leadMagnetWebhookUrl={process.env.LEAD_MAGNET_WEBHOOK_URL || ""}
-          scorecardWebhookUrl={process.env.SCORECARD_WEBHOOK_URL || ""}
-          workshopWebhookUrl={process.env.WORKSHOP_WEBHOOK_URL || ""}
+          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+          scorecardWebhookUrl={scorecardWebhookUrl}
+          workshopWebhookUrl={workshopWebhookUrl}
         />
 
         {/* —— Comparison Table —— */}

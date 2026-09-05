@@ -10,27 +10,63 @@ import LandingFAQSectionV1 from "./_sections/faq";
 import LandingFinalCTASectionV1 from "./_sections/final-cta";
 
 const Page = () => {
+  const leadMagnetWebhookUrl = process.env.LEAD_MAGNET_WEBHOOK_URL || "";
+  const scorecardWebhookUrl = process.env.SCORECARD_WEBHOOK_URL || "";
+  const workshopWebhookUrl = process.env.WORKSHOP_WEBHOOK_URL || "";
+
   return (
     <WindowLayout>
-      <LandingHeroSectionV1 />
+      <LandingHeroSectionV1
+        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+        scorecardWebhookUrl={scorecardWebhookUrl}
+        workshopWebhookUrl={workshopWebhookUrl}
+      />
 
       <LandingSocialProofBlockNum2SectionV1 />
 
-      <LandingProblemSectionV1 />
+      <LandingProblemSectionV1
+        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+        scorecardWebhookUrl={scorecardWebhookUrl}
+        workshopWebhookUrl={workshopWebhookUrl}
+      />
 
-      <LandingSocialProofBlockNum1SectionV1 />
+      <LandingSocialProofBlockNum1SectionV1
+        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+        scorecardWebhookUrl={scorecardWebhookUrl}
+        workshopWebhookUrl={workshopWebhookUrl}
+      />
 
-      <LandingThreeDreamOutcomeBlocksSectionV1 />
+      <LandingThreeDreamOutcomeBlocksSectionV1
+        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+        scorecardWebhookUrl={scorecardWebhookUrl}
+        workshopWebhookUrl={workshopWebhookUrl}
+      />
 
-      <LandingSocialProofBlockNum1SectionV1 />
+      <LandingSocialProofBlockNum1SectionV1
+        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+        scorecardWebhookUrl={scorecardWebhookUrl}
+        workshopWebhookUrl={workshopWebhookUrl}
+      />
 
-      <LandingWhyThisScorecardIsDifferentSectionV1 />
+      <LandingWhyThisScorecardIsDifferentSectionV1
+        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+        scorecardWebhookUrl={scorecardWebhookUrl}
+        workshopWebhookUrl={workshopWebhookUrl}
+      />
 
-      <LandingHowItWorksSectionV1 />
+      <LandingHowItWorksSectionV1
+        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+        scorecardWebhookUrl={scorecardWebhookUrl}
+        workshopWebhookUrl={workshopWebhookUrl}
+      />
 
       <LandingFAQSectionV1 />
 
-      <LandingFinalCTASectionV1 />
+      <LandingFinalCTASectionV1
+        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
+        scorecardWebhookUrl={scorecardWebhookUrl}
+        workshopWebhookUrl={workshopWebhookUrl}
+      />
     </WindowLayout>
   );
 };

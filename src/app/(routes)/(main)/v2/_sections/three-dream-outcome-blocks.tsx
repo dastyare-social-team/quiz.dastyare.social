@@ -5,13 +5,9 @@ import SectionWrapper from "@/components/section-wrapper";
 import Image from "next/image";
 
 const LandingThreeDreamOutcomeBlocksSectionV2 = ({
-  leadMagnetWebhookUrl = "",
-  scorecardWebhookUrl = "",
-  workshopWebhookUrl = "",
+  webhookUrl,
 }: {
-  leadMagnetWebhookUrl?: string;
-  scorecardWebhookUrl?: string;
-  workshopWebhookUrl?: string;
+  webhookUrl?: string;
 }) => {
   return (
     <>
@@ -31,9 +27,7 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = ({
            <RegistrationForm
               primary_cta="Get Your Score — Now"
               cta_location="three-dream-outcome"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
             />
         </div>
 
@@ -67,9 +61,7 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = ({
            <RegistrationForm
               primary_cta="Get Your Score — Now"
               cta_location="three-dream-outcome"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
             />
         </div>
 
@@ -102,9 +94,7 @@ const LandingThreeDreamOutcomeBlocksSectionV2 = ({
            <RegistrationForm
               primary_cta="Get Your Score — Now"
               cta_location="three-dream-outcome"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
             />
         </div>
 

@@ -5,13 +5,9 @@ import SectionWrapper from "@/components/section-wrapper";
 import { FootprintsIcon } from "lucide-react";
 
 const LandingHowItWorksSectionV1 = ({
-  leadMagnetWebhookUrl = "",
-  scorecardWebhookUrl = "",
-  workshopWebhookUrl = "",
+  webhookUrl,
 }: {
-  leadMagnetWebhookUrl?: string;
-  scorecardWebhookUrl?: string;
-  workshopWebhookUrl?: string;
+  webhookUrl?: string;
 }) => {
   return (
     <SectionWrapper className="justify-center items-center">
@@ -26,9 +22,7 @@ const LandingHowItWorksSectionV1 = ({
          <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="how-it-works"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-5 mt-5">

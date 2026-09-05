@@ -96,15 +96,11 @@ const validatePhone = (
 const RegistrationForm = ({
   primary_cta,
   cta_location = "unknown",
-  leadMagnetWebhookUrl,
-  scorecardWebhookUrl,
-  workshopWebhookUrl,
+  webhookUrl,
 }: {
   primary_cta: string;
   cta_location?: string;
-  leadMagnetWebhookUrl: string;
-  scorecardWebhookUrl: string;
-  workshopWebhookUrl: string;
+  webhookUrl?: string;
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -121,12 +117,6 @@ const RegistrationForm = ({
     cta_location === "meet-the-host" || primary_cta.toLowerCase().includes("save my seat")
       ? "workshop"
       : "scorecard";
-
-  const WEBHOOK_URLS: Record<string, string> = {
-    leadMagnet: leadMagnetWebhookUrl?.trim() || "",
-    scorecard: scorecardWebhookUrl?.trim() || "",
-    workshop: workshopWebhookUrl?.trim() || "",
-  };
 
   const handleContinue = () => {
     const nameValidation = validateName(name);
@@ -197,10 +187,9 @@ const RegistrationForm = ({
       return;
     }
 
-    const webhookUrl = WEBHOOK_URLS[formType];
     if (!webhookUrl) {
-      capture("registration_form_webhook_missing", { formType });
-      setError(`The registration webhook URL is not configured for "${formType}".`);
+      capture("registration_form_webhook_missing");
+      setError("The registration webhook URL is not configured.");
       return;
     }
 

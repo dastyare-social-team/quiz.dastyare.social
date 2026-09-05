@@ -5,13 +5,9 @@ import SectionWrapper from "@/components/section-wrapper";
 import Image from "next/image";
 
 const LandingHeroSectionV2 = ({
-  leadMagnetWebhookUrl = "",
-  scorecardWebhookUrl = "",
-  workshopWebhookUrl = "",
+  webhookUrl,
 }: {
-  leadMagnetWebhookUrl?: string;
-  scorecardWebhookUrl?: string;
-  workshopWebhookUrl?: string;
+  webhookUrl?: string;
 }) => {
   return (
     <SectionWrapper className="md:pt-0 border-0">
@@ -38,9 +34,7 @@ const LandingHeroSectionV2 = ({
            <RegistrationForm
               primary_cta="Get Your Score — Now"
               cta_location="hero"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
             />
 
           <div className="text-[18px] opacity-80 leading-6.5">

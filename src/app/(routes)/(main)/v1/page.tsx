@@ -10,62 +10,44 @@ import LandingFAQSectionV1 from "./_sections/faq";
 import LandingFinalCTASectionV1 from "./_sections/final-cta";
 
 const Page = () => {
-  const leadMagnetWebhookUrl = process.env.LEAD_MAGNET_WEBHOOK_URL || "";
-  const scorecardWebhookUrl = process.env.SCORECARD_WEBHOOK_URL || "";
-  const workshopWebhookUrl = process.env.WORKSHOP_WEBHOOK_URL || "";
+  const webhookUrl = process.env.WEBHOOK_URL || "";
 
   return (
     <WindowLayout>
       <LandingHeroSectionV1
-        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-        scorecardWebhookUrl={scorecardWebhookUrl}
-        workshopWebhookUrl={workshopWebhookUrl}
+        webhookUrl={webhookUrl}
       />
 
       <LandingSocialProofBlockNum2SectionV1 />
 
       <LandingProblemSectionV1
-        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-        scorecardWebhookUrl={scorecardWebhookUrl}
-        workshopWebhookUrl={workshopWebhookUrl}
+        webhookUrl={webhookUrl}
       />
 
       <LandingSocialProofBlockNum1SectionV1
-        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-        scorecardWebhookUrl={scorecardWebhookUrl}
-        workshopWebhookUrl={workshopWebhookUrl}
+        webhookUrl={webhookUrl}
       />
 
       <LandingThreeDreamOutcomeBlocksSectionV1
-        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-        scorecardWebhookUrl={scorecardWebhookUrl}
-        workshopWebhookUrl={workshopWebhookUrl}
+        webhookUrl={webhookUrl}
       />
 
       <LandingSocialProofBlockNum1SectionV1
-        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-        scorecardWebhookUrl={scorecardWebhookUrl}
-        workshopWebhookUrl={workshopWebhookUrl}
+        webhookUrl={webhookUrl}
       />
 
       <LandingWhyThisScorecardIsDifferentSectionV1
-        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-        scorecardWebhookUrl={scorecardWebhookUrl}
-        workshopWebhookUrl={workshopWebhookUrl}
+        webhookUrl={webhookUrl}
       />
 
       <LandingHowItWorksSectionV1
-        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-        scorecardWebhookUrl={scorecardWebhookUrl}
-        workshopWebhookUrl={workshopWebhookUrl}
+        webhookUrl={webhookUrl}
       />
 
       <LandingFAQSectionV1 />
 
       <LandingFinalCTASectionV1
-        leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-        scorecardWebhookUrl={scorecardWebhookUrl}
-        workshopWebhookUrl={workshopWebhookUrl}
+        webhookUrl={webhookUrl}
       />
     </WindowLayout>
   );

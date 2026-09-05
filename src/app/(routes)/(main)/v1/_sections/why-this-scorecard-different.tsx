@@ -104,13 +104,9 @@ const tableData = [
 ];
 
 const LandingWhyThisScorecardIsDifferentSectionV1 = async ({
-  leadMagnetWebhookUrl = "",
-  scorecardWebhookUrl = "",
-  workshopWebhookUrl = "",
+  webhookUrl,
 }: {
-  leadMagnetWebhookUrl?: string;
-  scorecardWebhookUrl?: string;
-  workshopWebhookUrl?: string;
+  webhookUrl?: string;
 }) => {
   const t = await getTranslations("why_this_scorecard_different");
 
@@ -128,9 +124,7 @@ const LandingWhyThisScorecardIsDifferentSectionV1 = async ({
          <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="why-different"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
         />
 
         {/* —— Comparison Table —— */}

@@ -10,13 +10,9 @@ const value_props = [
 ];
 
 const LandingFinalCTASectionV1 = ({
-  leadMagnetWebhookUrl = "",
-  scorecardWebhookUrl = "",
-  workshopWebhookUrl = "",
+  webhookUrl,
 }: {
-  leadMagnetWebhookUrl?: string;
-  scorecardWebhookUrl?: string;
-  workshopWebhookUrl?: string;
+  webhookUrl?: string;
 }) => {
   return (
     <SectionWrapper className="justify-center items-center">
@@ -40,9 +36,7 @@ const LandingFinalCTASectionV1 = ({
            <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="final-cta"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
         />
         </div>
       </div>

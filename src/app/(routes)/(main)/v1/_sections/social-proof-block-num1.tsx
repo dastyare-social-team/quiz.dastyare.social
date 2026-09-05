@@ -4,13 +4,9 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 
 const LandingSocialProofBlockNum1SectionV1 = ({
-  leadMagnetWebhookUrl = "",
-  scorecardWebhookUrl = "",
-  workshopWebhookUrl = "",
+  webhookUrl,
 }: {
-  leadMagnetWebhookUrl?: string;
-  scorecardWebhookUrl?: string;
-  workshopWebhookUrl?: string;
+  webhookUrl?: string;
 }) => {
   return (
     <SectionWrapper className="justify-center items-center md:pt-10 md:pb-10">
@@ -30,9 +26,7 @@ const LandingSocialProofBlockNum1SectionV1 = ({
          <RegistrationForm
           primary_cta="Get Your Score — Now"
           cta_location="social-proof"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
         />
       </div>
     </SectionWrapper>

@@ -4,13 +4,9 @@ import RegistrationForm from "@/components/registration-form";
 import SectionWrapper from "@/components/section-wrapper";
 
 const LandingProblemSectionV2 = ({
-  leadMagnetWebhookUrl = "",
-  scorecardWebhookUrl = "",
-  workshopWebhookUrl = "",
+  webhookUrl,
 }: {
-  leadMagnetWebhookUrl?: string;
-  scorecardWebhookUrl?: string;
-  workshopWebhookUrl?: string;
+  webhookUrl?: string;
 }) => {
   return (
     <SectionWrapper className="justify-center">
@@ -38,9 +34,7 @@ const LandingProblemSectionV2 = ({
          <RegistrationForm
             primary_cta="Get Your Score — Now"
             cta_location="problem"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
           />
       </div>
     </SectionWrapper>

@@ -4,13 +4,9 @@ import { CrownIcon } from "lucide-react";
 import RegistrationForm from "@/components/registration-form";
 
 const LandingWhyThisScorecardIsDifferentSectionV2 = async ({
-  leadMagnetWebhookUrl = "",
-  scorecardWebhookUrl = "",
-  workshopWebhookUrl = "",
+  webhookUrl,
 }: {
-  leadMagnetWebhookUrl?: string;
-  scorecardWebhookUrl?: string;
-  workshopWebhookUrl?: string;
+  webhookUrl?: string;
 }) => {
   const t = await getTranslations("why_this_scorecard_different");
 
@@ -104,9 +100,7 @@ const LandingWhyThisScorecardIsDifferentSectionV2 = async ({
          <RegistrationForm
             primary_cta="Get Your Score — Now"
             cta_location="why-different"
-          leadMagnetWebhookUrl={leadMagnetWebhookUrl}
-          scorecardWebhookUrl={scorecardWebhookUrl}
-          workshopWebhookUrl={workshopWebhookUrl}
+          webhookUrl={webhookUrl}
           />
       </div>
     </SectionWrapper>

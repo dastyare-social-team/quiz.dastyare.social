@@ -114,7 +114,8 @@ const RegistrationForm = ({
   const routeVariant = pathname?.includes("/v2") ? "v2" : "v1";
 
   const formType =
-    cta_location === "meet-the-host" || primary_cta.toLowerCase().includes("save my seat")
+    cta_location === "meet-the-host" ||
+    primary_cta.toLowerCase().includes("save my seat")
       ? "workshop"
       : "scorecard";
 

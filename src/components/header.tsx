@@ -25,7 +25,7 @@ const Header = () => {
         <div className="text-xl leading-2">
           Dastyare Social
           <span className="text-sm">
-            —/ Raise Visibility, Build Brand, Grow SALES
+            &nbsp;—/ Raise Visibility, Build Brand, Grow SALES
           </span>
         </div>
       </Link>

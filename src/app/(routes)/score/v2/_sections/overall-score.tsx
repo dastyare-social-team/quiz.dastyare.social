@@ -35,7 +35,10 @@ export default function ScoreOverallScoreSectionV1({
         </div>
 
         <div>
-          <Button onClick={() => downloadPbReport(total)}>
+          <Button
+            onClick={() => downloadPbReport(total)}
+            className="max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+          >
             Get Your PB Report — Now
           </Button>
         </div>

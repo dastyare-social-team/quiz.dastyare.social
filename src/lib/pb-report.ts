@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
+import { captureException } from "@/lib/posthog";
 import { scorecard_v1 } from "@/config/scorecard-v1";
 
 export function getMaxTotal() {
@@ -46,6 +47,20 @@ const SECTION_IDS = [
   "pb-section-vitals",
   "pb-section-breakdown",
 ];
+
+// Desktop canvas + unconditional equivalents of the `md:` rules used inside
+// the three score sections (SectionWrapper base + per-section overrides).
+// Media queries follow the live viewport, so on a narrow screen the capture
+// would come out stacked — these force the desktop arrangement instead.
+const DESKTOP_CANVAS_WIDTH = 1100;
+const DESKTOP_OVERRIDES = [
+  ".pb-desktop-capture .md\\:flex-row{flex-direction:row}",
+  ".pb-desktop-capture .md\\:flex-row-reverse{flex-direction:row-reverse}",
+  ".pb-desktop-capture .md\\:items-center{align-items:center}",
+  ".pb-desktop-capture .md\\:pt-16{padding-top:4rem}",
+  ".pb-desktop-capture .md\\:pb-20{padding-bottom:5rem}",
+  ".pb-desktop-capture .md\\:pt-0{padding-top:0}",
+].join("");
 
 function loadImageSize(url: string) {
   return new Promise<{ w: number; h: number }>((resolve, reject) => {
@@ -125,39 +140,55 @@ async function renderPageBackground(
 
 export async function downloadPbReport(total: number) {
   void total;
+  let failedStage = "locate-sections";
   try {
     const nodes = SECTION_IDS.map((id) => document.getElementById(id)).filter(
       (n): n is HTMLElement => n !== null,
     );
     if (nodes.length === 0) throw new Error("score sections not found");
+    if (nodes.length < SECTION_IDS.length)
+      throw new Error(
+        `only ${nodes.length} of ${SECTION_IDS.length} sections found`,
+      );
 
     // Off-screen stage carrying the app body background (theme + pattern).
     const bodyStyle = getComputedStyle(document.body);
     const stage = document.createElement("div");
     stage.setAttribute("aria-hidden", "true");
+    stage.classList.add("pb-desktop-capture");
     stage.style.cssText =
       "position:fixed;left:-20000px;top:0;pointer-events:none;";
     stage.style.backgroundColor = bodyStyle.backgroundColor;
     stage.style.backgroundImage = bodyStyle.backgroundImage;
     document.body.appendChild(stage);
 
+    // Force desktop arrangement inside the capture, whatever the viewport.
+    const forceDesktop = document.createElement("style");
+    forceDesktop.textContent = DESKTOP_OVERRIDES;
+    document.head.appendChild(forceDesktop);
+
     const snapshots: { url: string; w: number; h: number }[] = [];
+    // Smaller canvases on small screens — same desktop layout, less memory.
+    const pixelRatio = window.innerWidth < 768 ? 1.5 : 2;
     try {
-      for (const node of nodes) {
+      for (let i = 0; i < nodes.length; i++) {
+        failedStage = `snapshot-section-${i}`;
+        const node = nodes[i];
         const clone = node.cloneNode(true) as HTMLElement;
         // The only thing removed from the report: the download CTA buttons.
         clone.querySelectorAll("button").forEach((b) => b.remove());
-        clone.style.width = `${node.offsetWidth}px`;
+        clone.style.width = `${Math.max(node.offsetWidth, DESKTOP_CANVAS_WIDTH)}px`;
         clone.style.margin = "0";
         stage.appendChild(clone);
         await inlineImagesAsDataUrls(clone);
-        const url = await toPng(clone, { pixelRatio: 2 });
+        const url = await toPng(clone, { pixelRatio });
         const size = await loadImageSize(url);
         snapshots.push({ url, w: size.w, h: size.h });
         clone.remove();
       }
     } finally {
       stage.remove();
+      forceDesktop.remove();
     }
 
     if (snapshots.length === 0) throw new Error("nothing captured");
@@ -177,6 +208,7 @@ export async function downloadPbReport(total: number) {
     const fit = totalH > contentH ? contentH / totalH : 1;
 
     // Whole-page background first, sections float transparently over it.
+    failedStage = "compose-pdf";
     const pageBg = await renderPageBackground(
       bodyStyle.backgroundColor,
       bodyStyle.backgroundImage,
@@ -195,7 +227,13 @@ export async function downloadPbReport(total: number) {
     });
 
     pdf.save("pb-report.pdf");
-  } catch {
+  } catch (error) {
+    captureException(error, {
+      context: "pb_report_export",
+      stage: failedStage,
+      viewport_width:
+        typeof window !== "undefined" ? window.innerWidth : "unknown",
+    });
     // fallback to print dialog
     window.print();
   }

@@ -81,8 +81,20 @@ function readBlobAsDataUrl(blob: Blob) {
   });
 }
 
-// Bake every <img> in the clone into a data URL before snapshotting, so the
-// capture uses exactly the pixels the live page shows.
+// Snapshot with retries at decreasing resolution — mobile browsers can
+// refuse large canvases, in which case a smaller render still beats print.
+async function snapshotNode(clone: HTMLElement, startRatio: number) {
+  let ratio = startRatio;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await toPng(clone, { pixelRatio: ratio });
+    } catch (error) {
+      if (attempt === 2) throw error;
+      ratio = Math.max(1, ratio - 0.5);
+    }
+  }
+  throw new Error("snapshot failed");
+}
 async function inlineImagesAsDataUrls(root: HTMLElement) {
   const imgs = Array.from(root.querySelectorAll("img"));
   await Promise.all(
@@ -181,7 +193,7 @@ export async function downloadPbReport(total: number) {
         clone.style.margin = "0";
         stage.appendChild(clone);
         await inlineImagesAsDataUrls(clone);
-        const url = await toPng(clone, { pixelRatio });
+        const url = await snapshotNode(clone, pixelRatio);
         const size = await loadImageSize(url);
         snapshots.push({ url, w: size.w, h: size.h });
         clone.remove();

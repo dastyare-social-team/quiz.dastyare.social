@@ -43,7 +43,7 @@ const Footer = () => {
             <Link
               target="_blank"
               rel="noopener noreferrer"
-              href="https://tiktok.com/omidshabab_channel"
+              href="https://www.tiktok.com/@omidshabab_channel"
               className="hover:text-primary"
             >
               tiktok
@@ -52,7 +52,7 @@ const Footer = () => {
             <Link
               target="_blank"
               rel="noopener noreferrer"
-              href="https://x.com/omidshabab_channel"
+              href="https://x.com/omidshabab_com"
               className="hover:text-primary"
             >
               twitter
@@ -61,7 +61,7 @@ const Footer = () => {
             <Link
               target="_blank"
               rel="noopener noreferrer"
-              href="https://youtube.com/omidshabab_channel"
+              href="https://www.youtube.com/@omidshabab_channel"
               className="hover:text-primary"
             >
               youtube
@@ -70,7 +70,7 @@ const Footer = () => {
             <Link
               target="_blank"
               rel="noopener noreferrer"
-              href="https://linkedin.com/omidshabab-channel"
+              href="https://www.linkedin.com/in/omid-shabab/"
               className="hover:text-primary"
             >
               linkedin

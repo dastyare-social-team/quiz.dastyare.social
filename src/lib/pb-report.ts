@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import { toPng } from "html-to-image";
-import { captureException } from "@/lib/posthog";
+import { capture, captureException } from "@/lib/posthog";
 import { scorecard_v1 } from "@/config/scorecard-v1";
 
 export function getMaxTotal() {
@@ -81,6 +81,51 @@ function readBlobAsDataUrl(blob: Blob) {
   });
 }
 
+function loadImageElement(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("could not load image"));
+    img.src = src;
+  });
+}
+
+// oklch() -> srgb() so canvas fills use an exact, universally-parsed color.
+// Canvas2D implementations are inconsistent about accepting oklch() in
+// fillStyle; the conversion keeps the theme color bit-identical.
+function oklchToRgbString(color: string): string | null {
+  const match =
+    /oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)/.exec(
+      color,
+    );
+  if (!match) return null;
+  const L = Number(match[1]);
+  const C = Number(match[2]);
+  const h = (Number(match[3]) * Math.PI) / 180;
+  const a = C * Math.cos(h);
+  const b = C * Math.sin(h);
+  const l = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s = L - 0.0894841775 * a - 1.291485548 * b;
+  const l3 = l * l * l;
+  const m3 = m * m * m;
+  const s3 = s * s * s;
+  const linear = [
+    4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3,
+    -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3,
+    -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3,
+  ];
+  const gamma = (v: number) => {
+    const clamped = Math.min(1, Math.max(0, v));
+    const srgb =
+      clamped <= 0.0031308
+        ? 12.92 * clamped
+        : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
+    return Math.round(srgb * 255);
+  };
+  return `rgb(${gamma(linear[0])}, ${gamma(linear[1])}, ${gamma(linear[2])})`;
+}
+
 // Snapshot with retries at decreasing resolution — mobile browsers can
 // refuse large canvases, in which case a smaller render still beats print.
 async function snapshotNode(clone: HTMLElement, startRatio: number) {
@@ -97,19 +142,34 @@ async function snapshotNode(clone: HTMLElement, startRatio: number) {
 }
 async function inlineImagesAsDataUrls(root: HTMLElement) {
   const imgs = Array.from(root.querySelectorAll("img"));
+  let ok = 0;
+  let failed = 0;
   await Promise.all(
     imgs.map(async (img) => {
       try {
         const res = await fetch(img.currentSrc || img.src);
-        if (!res.ok) return;
+        if (!res.ok) {
+          failed++;
+          return;
+        }
+        const dataUrl = await readBlobAsDataUrl(await res.blob());
+        // Verify the data URL actually decodes before swapping it in.
+        const check = await loadImageElement(dataUrl);
+        if (!check.naturalWidth) {
+          failed++;
+          return;
+        }
         img.removeAttribute("srcset");
         img.removeAttribute("sizes");
-        img.src = await readBlobAsDataUrl(await res.blob());
+        img.src = dataUrl;
+        ok++;
       } catch {
         // leave the original source in place
+        failed++;
       }
     }),
   );
+  return { ok, failed };
 }
 
 // Renders the app page background (theme color + pattern tile) as one
@@ -117,26 +177,22 @@ async function inlineImagesAsDataUrls(root: HTMLElement) {
 async function renderPageBackground(
   backgroundColor: string,
   backgroundImage: string,
-): Promise<string | null> {
+): Promise<{ url: string | null; patternOk: boolean }> {
   try {
     const match = /url\("?(.+?)"?\)/.exec(backgroundImage);
-    if (!match) return null;
-    const tile = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error("could not load pattern"));
-      img.src = match[1];
-    });
+    if (!match) return { url: null, patternOk: false };
+    const tile = await loadImageElement(match[1]);
+    if (!tile.naturalWidth) return { url: null, patternOk: false };
     // A5 in CSS px at 96dpi: 148mm x 210mm.
     const scale = 2;
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(559.4 * scale);
     canvas.height = Math.round(793.7 * scale);
     const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
+    if (!ctx) return { url: null, patternOk: true };
     ctx.save();
     ctx.scale(scale, scale);
-    ctx.fillStyle = backgroundColor;
+    ctx.fillStyle = oklchToRgbString(backgroundColor) ?? backgroundColor;
     ctx.fillRect(0, 0, 559.4, 793.7);
     const pattern = ctx.createPattern(tile, "repeat");
     if (pattern) {
@@ -144,9 +200,9 @@ async function renderPageBackground(
       ctx.fillRect(0, 0, 559.4, 793.7);
     }
     ctx.restore();
-    return canvas.toDataURL("image/png");
+    return { url: canvas.toDataURL("image/png"), patternOk: true };
   } catch {
-    return null;
+    return { url: null, patternOk: false };
   }
 }
 
@@ -182,6 +238,8 @@ export async function downloadPbReport(total: number) {
     const snapshots: { url: string; w: number; h: number }[] = [];
     // Smaller canvases on small screens — same desktop layout, less memory.
     const pixelRatio = window.innerWidth < 768 ? 1.5 : 2;
+    let imagesOk = 0;
+    let imagesFailed = 0;
     try {
       for (let i = 0; i < nodes.length; i++) {
         failedStage = `snapshot-section-${i}`;
@@ -192,7 +250,9 @@ export async function downloadPbReport(total: number) {
         clone.style.width = `${Math.max(node.offsetWidth, DESKTOP_CANVAS_WIDTH)}px`;
         clone.style.margin = "0";
         stage.appendChild(clone);
-        await inlineImagesAsDataUrls(clone);
+        const inlined = await inlineImagesAsDataUrls(clone);
+        imagesOk += inlined.ok;
+        imagesFailed += inlined.failed;
         const url = await snapshotNode(clone, pixelRatio);
         const size = await loadImageSize(url);
         snapshots.push({ url, w: size.w, h: size.h });
@@ -225,8 +285,8 @@ export async function downloadPbReport(total: number) {
       bodyStyle.backgroundColor,
       bodyStyle.backgroundImage,
     );
-    if (pageBg) {
-      pdf.addImage(pageBg, "PNG", 0, 0, 148, 210);
+    if (pageBg.url) {
+      pdf.addImage(pageBg.url, "PNG", 0, 0, 148, 210);
     }
 
     let y = margin;
@@ -239,6 +299,13 @@ export async function downloadPbReport(total: number) {
     });
 
     pdf.save("pb-report.pdf");
+    capture("pb_report_exported", {
+      viewport_width: window.innerWidth,
+      pixel_ratio: pixelRatio,
+      images_ok: imagesOk,
+      images_failed: imagesFailed,
+      pattern_ok: pageBg.patternOk,
+    });
   } catch (error) {
     captureException(error, {
       context: "pb_report_export",

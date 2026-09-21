@@ -1,97 +1,68 @@
 "use client";
 
-import {
-  EChartsRadialChart,
-  type ChartConfig,
-} from "@/components/evilcharts/charts/echarts-radial-chart";
+import { Button } from "@/components/button";
+import SectionWrapper from "@/components/section-wrapper";
+import { downloadPbReport } from "@/lib/pb-report";
 
-const data = [
-  { vital: "visibility", value: 68 },
-  { vital: "authority", value: 72 },
-  { vital: "consistency", value: 55 },
-  { vital: "ownership", value: 45 },
-  { vital: "demand", value: 61 },
+const vitals = [
+  {
+    name: "Visibility",
+    text: "Can the right people find you before they find someone else?",
+  },
+  {
+    name: "Authority",
+    text: "When they find you, do they trust what they see?",
+  },
+  {
+    name: "Consistency",
+    text: "Are you showing up on a rhythm, or ghosting for weeks at a time?",
+  },
+  {
+    name: "Ownership",
+    text: "Do you own your audience, or are you renting it from a platform?",
+  },
+  {
+    name: "Demand",
+    text: "Does any of this actually make you money?",
+  },
 ];
 
-const config: ChartConfig = {
-  visibility: {
-    label: "Visibility",
-    colors: { light: ["#3b82f6"], dark: ["#60a5fa"] },
-  },
-  authority: {
-    label: "Authority",
-    colors: { light: ["#10b981"], dark: ["#34d399"] },
-  },
-  consistency: {
-    label: "Consistency",
-    colors: { light: ["#f59e0b"], dark: ["#fbbf24"] },
-  },
-  ownership: {
-    label: "Ownership",
-    colors: { light: ["#8b5cf6"], dark: ["#a78bfa"] },
-  },
-  demand: {
-    label: "Demand",
-    colors: { light: ["#be123c"], dark: ["#f43f5e"] },
-  },
+type Props = {
+  total: number;
 };
 
-export default function ScoreFiveVitalsSectionV1() {
+export default function ScoreFiveVitalsSectionV1({ total }: Props) {
   return (
-    <section className="border border-primary/5 rounded-md p-6">
-      <h3 className="text-lg font-semibold text-primary">
-        The 5 Vitals of a Personal Brand That Actually Works
-      </h3>
-      <p className="mt-2 text-muted-foreground">
-        Views and followers aren't vitals — they're symptoms. These are the 5
-        things that actually decide whether a personal brand builds trust,
-        builds demand, or builds nothing at all.
-      </p>
-
-      <div className="mt-4 flex flex-col md:flex-row items-start gap-6">
-        <div className="w-full md:w-1/2">
-          <div className="h-64 md:h-80">
-            <EChartsRadialChart
-              data={data}
-              config={config}
-              nameKey="vital"
-              variant="semi"
-              innerRadius="60%"
-              outerRadius="100%"
-              className="h-full w-full"
-            >
-              <EChartsRadialChart.Legend variant="rounded-square" />
-              <EChartsRadialChart.Tooltip />
-              <EChartsRadialChart.RadialBar dataKey="value" barSize={18} />
-            </EChartsRadialChart>
-          </div>
+    <SectionWrapper>
+      <div className="flex flex-col flex-1 gap-y-8">
+        <div className="flex flex-col gap-y-1.5">
+          <h2>The 5 Vitals of a Personal Brand That Actually Works</h2>
+          <p>
+            Views and followers aren’t vitals — they’re symptoms. These are the
+            5 things that actually decide whether a personal brand builds trust,
+            builds demand, or builds nothing at all.
+          </p>
         </div>
 
-        <div className="w-full md:w-1/2">
-          <ul className="mt-2 space-y-2 text-sm">
-            <li>
-              <strong>Visibility</strong> — Can the right people find you before
-              they find someone else?
+        <ul className="space-y-2">
+          {vitals.map((v) => (
+            <li key={v.name}>
+              <span className="text-primary">{v.name}</span> — {v.text}
             </li>
-            <li>
-              <strong>Authority</strong> — When they find you, do they trust
-              what they see?
-            </li>
-            <li>
-              <strong>Consistency</strong> — Are you showing up on a rhythm, or
-              ghosting for weeks at a time?
-            </li>
-            <li>
-              <strong>Ownership</strong> — Do you own your audience, or are you
-              renting it from a platform?
-            </li>
-            <li>
-              <strong>Demand</strong> — Does any of this actually make you
-              money?
-            </li>
-          </ul>
+          ))}
+        </ul>
+
+        <div>
+          <Button onClick={() => downloadPbReport(total)}>
+            Get Your PB Report — Now
+          </Button>
         </div>
       </div>
-    </section>
+
+      <div
+        aria-hidden
+        className="aspect-square flex-1 bg-primary/[1%] border-2 border-primary/5"
+      />
+    </SectionWrapper>
   );
 }

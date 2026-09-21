@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/button";
 import QuestionOption from "@/components/question-option";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { capture, captureException } from "@/lib/posthog";
 import {
   getHighlightWords,
   Scorecard as scorecard_model,
@@ -40,8 +41,15 @@ function highlightQuestionText(text: string, highlightWords: string[]) {
   });
 }
 
-const Scorecard = ({ scorecard }: { scorecard: scorecard_model }) => {
+const Scorecard = ({
+  scorecard,
+  resultsWebhookUrl,
+}: {
+  scorecard: scorecard_model;
+  resultsWebhookUrl?: string;
+}) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const questions = scorecard.questions as ScoreQuestion[];
   const total_questions = questions.length;
@@ -93,6 +101,49 @@ const Scorecard = ({ scorecard }: { scorecard: scorecard_model }) => {
     if (!band) {
       console.error("Score band not found");
       return;
+    }
+
+    const maxOptionScore = Math.max(
+      ...questions.flatMap((q) => q.options.map((o) => o.score)),
+    );
+    const maxScore = questions.length * maxOptionScore;
+    const percent = Math.round((totalScore / maxScore) * 100);
+    const variant = scorecard.id.includes("v2") ? "v2" : "v1";
+
+    // Send quiz results to the CRM webhook (fire-and-forget, never blocks).
+    if (resultsWebhookUrl) {
+      const payload = {
+        name: searchParams.get("name") || "",
+        email: searchParams.get("email") || "",
+        phone: searchParams.get("phone") || "",
+        variant,
+        score: totalScore,
+        max_score: maxScore,
+        percent,
+        band_slug: band.slug,
+        band_title: band.title,
+        answers: questions.map((q, i) => ({
+          question_id: q.id,
+          category: q.category,
+          question: q.question,
+          selected_label: answers[i]?.label || "",
+          selected_score: answers[i]?.score ?? 0,
+        })),
+      };
+      capture("score_quiz_finished", {
+        variant,
+        score: totalScore,
+        percent,
+        result: band.slug,
+      });
+      void fetch(resultsWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch((error) => {
+        captureException(error, { context: "quiz_results_webhook" });
+      });
     }
 
     const params = new URLSearchParams({

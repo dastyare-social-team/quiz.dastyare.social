@@ -12,6 +12,22 @@ body {
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
 
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-border: var(--border);
+
+  --color-destructive: var(--destructive);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
   --color-button-background: var(--button-background);
   --color-button-foreground: var(--button-foreground);
   --color-button-border: var(--button-border);
@@ -30,6 +46,22 @@ body {
 
   --primary: oklch(0.65 0.19 41);
   --secondary: oklch(0.44 0.01 286);
+
+  --card: oklch(0.99 0 0);
+  --card-foreground: oklch(0.44 0.01 286);
+
+  --muted: oklch(0.95 0.008 60);
+  --muted-foreground: oklch(0.6 0.02 60);
+
+  --border: oklch(0.9 0.012 60);
+
+  --destructive: oklch(0.6 0.2 25);
+
+  --chart-1: oklch(0.65 0.19 41);
+  --chart-2: oklch(0.72 0.15 55);
+  --chart-3: oklch(0.55 0.14 35);
+  --chart-4: oklch(0.8 0.09 70);
+  --chart-5: oklch(0.55 0.02 286);
 
   --button-background: color-mix(in srgb, var(--primary) 10%, transparent);
   --button-foreground: var(--primary);

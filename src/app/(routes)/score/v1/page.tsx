@@ -45,6 +45,7 @@ const Content = () => {
       <ScoreOverallScoreSectionV1
         total={result.total}
         percent={percent}
+        bandSlug={result.band.slug}
         bandTitle={result.band.title}
         headline={getResultHeadline(result.band.slug)}
       />

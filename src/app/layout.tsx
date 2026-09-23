@@ -9,11 +9,29 @@ import { PageAnalytics } from "@/components/page-analytics";
 import { ConsentBanner } from "@/components/consent-banner";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://quiz.dastyare.social"),
   title: {
     default: "Scorecard — Dastyare Social",
     template: "%s — Dastyare Social",
   },
   description: "quiz.dastyare.social",
+  openGraph: {
+    type: "website",
+    siteName: "Dastyare Social",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 626,
+        alt: "Scorecard — Dastyare Social",
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og.png"],
+  },
 };
 
 export default async function RootLayout({
